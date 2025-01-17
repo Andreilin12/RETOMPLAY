@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reproductor Futurista</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+    /* Estilos Generales */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(130deg, #0f0c29, #302b63, #24243e);
+      color: white;
+    }
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 20px;
+    }
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.8);
+      border-bottom: 2px solid #1a73e8;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    header img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+    }
+    header h1 {
+      font-size: 24px;
+      margin: 0;
+      font-weight: 700;
+      color: #1a73e8;
+    }
+    .icons {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .icon {
+      font-size: 24px;
+      color: #1a73e8;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    .icon:hover {
+      transform: scale(1.2);
+    }
+    .search-bar {
+      display: none;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 6px;
+      padding: 5px 10px;
+      color: white;
+      margin-left: 10px;
+    }
+    .search-bar:focus {
+      outline: none;
+    }
+    /* Videos */
+    .video-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .video-item {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.3s;
+    }
+    .video-item:hover {
+      transform: scale(1.05);
+    }
+    .video-item img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+    }
+    .video-item h3 {
+      padding: 10px;
+      margin: 0;
+      font-size: 14px;
+    }
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      overflow-y: auto;
+    }
+    .modal-content {
+      width: 90%;
+      max-width: 800px;
+      padding: 20px;
+      background: #121212;
+      border-radius: 12px;
+      margin: 50px auto;
+      max-height: 90vh;
+    }
+    .modal-close {
+      font-size: 24px;
+      color: #fff;
+      float: right;
+      cursor: pointer;
+    }
+    #video-player-container h2 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+      color: #1a73e8;
+    }
+    #video-player {
+      width: 100%;
+      height: 300px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    .playlist {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .playlist-item {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .playlist-item img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+    }
+    .playlist-item h3 {
+      font-size: 12px;
+      padding: 10px;
+      color: #fff;
+      margin: 0;
+    }
+    /* Floating Player */
+    .floating-player {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      width: 300px;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      z-index: 1100;
+      display: none;
+    }
+    .floating-player iframe {
+      width: 100%;
+      height: 180px;
+    }
+    .floating-close {
+      text-align: right;
+      padding: 5px;
+      color: #fff;
+      cursor: pointer;
+    }
+  </style>
+
+</head>
+<body>
+  <header>
+    <img src="https://via.placeholder.com/50" alt="Logo">
+    <h1>Reproductor Futurista</h1>
+    <div class="icons">
+      <i class="fas fa-search icon" onclick="toggleSearch()"></i>
+      <i class="fas fa-history icon" onclick="showHistory()"></i>
+    </div>
+    <input type="text" id="search-bar" class="search-bar" placeholder="Buscar..." onkeypress="handleSearch(event)">
+  </header>
+
+  <div class="container">
+    <div class="video-container" id="video-container"></div>
+  </div>
+
+  <!-- Modal de Videos -->
+  <div class="modal" id="videoModal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeModal()">&times;</span>
+      <div id="video-player-container"></div>
+      <div class="playlist" id="playlist"></div>
+    </div>
+  </div>
+
+  <!-- Floating Player -->
+  <div class="floating-player" id="floatingPlayer">
+    <div class="floating-close" onclick="closeFloatingPlayer()">&times;</div>
+    <iframe id="floatingIframe" frameborder="0" allow="autoplay"></iframe>
+  </div>
+
+  <script>
+    const apiKey = 'AIzaSyBSzaHBFbv6O6-izrqO5cQUa6j3WswRJEo';
+    let currentPlaylist = [];
+    let currentVideo = null;
+    let history = [];
+
+    function loadVideos(query = 'latest music') {
+      fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=20&q=${query}&key=${apiKey}`)
+        .then(response => response.json())
+        .then(data => {
+          const videoContainer = document.getElementById('video-container');
+          videoContainer.innerHTML = '';
+          currentPlaylist = data.items.filter(item => item.id.videoId);
+
+          const shuffledVideos = currentPlaylist.sort(() => Math.random() - 0.5);
+
+          shuffledVideos.slice(0, 10).forEach((item, index) => {
+            const videoElement = document.createElement('div');
+            videoElement.classList.add('video-item');
+            videoElement.innerHTML = `
+              <img src="${item.snippet.thumbnails.medium.url}" alt="${item.snippet.title}">
+              <h3>${item.snippet.title}</h3>
+            `;
+            videoElement.onclick = () => openModal(index);
+            videoContainer.appendChild(videoElement);
+          });
+        });
+    }
+
+    function openModal(index) {
+      document.getElementById('videoModal').style.display = 'flex';
+      playVideo(index);
+      renderPlaylist();
+    }
+
+    function closeModal() {
+      document.getElementById('videoModal').style.display = 'none';
+      showFloatingPlayer();
+    }
+
+    function playVideo(index) {
+      const video = currentPlaylist[index];
+      currentVideo = video;
+      document.getElementById('video-player-container').innerHTML = `
+        <h2>${video.snippet.title}</h2>
+        <iframe id="video-player" src="https://www.youtube.com/embed/${video.id.videoId}?autoplay=1" frameborder="0" allowfullscreen></iframe>
+      `;
+    }
+
+    function renderPlaylist() {
+      const playlistContainer = document.getElementById('playlist');
+      playlistContainer.innerHTML = '';
+      currentPlaylist.forEach((item, index) => {
+        const playlistItem = document.createElement('div');
+        playlistItem.classList.add('playlist-item');
+        playlistItem.innerHTML = `
+          <img src="${item.snippet.thumbnails.default.url}" alt="${item.snippet.title}">
+          <h3>${item.snippet.title}</h3>
+        `;
+        playlistItem.onclick = () => playVideo(index);
+        playlistContainer.appendChild(playlistItem);
+      });
+    }
+
+    function showFloatingPlayer() {
+      if (currentVideo) {
+        document.getElementById('floatingPlayer').style.display = 'block';
+        document.getElementById('floatingIframe').src = `https://www.youtube.com/embed/${currentVideo.id.videoId}?autoplay=1`;
+      }
+    }
+
+    function closeFloatingPlayer() {
+      document.getElementById('floatingPlayer').style.display = 'none';
+      document.getElementById('floatingIframe').src = '';
+    }
+
+    function toggleSearch() {
+      const searchBar = document.getElementById('search-bar');
+      searchBar.style.display = searchBar.style.display === 'none' ? 'block' : 'none';
+      searchBar.focus();
+    }
+
+    function handleSearch(event) {
+      if (event.key === 'Enter') {
+        loadVideos(event.target.value);
+        event.target.value = '';
+      }
+    }
+
+    window.onload = () => loadVideos();
+  </script>
+</body>
+</html>
