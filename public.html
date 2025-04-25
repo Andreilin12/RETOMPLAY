@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Publicaciones - GalloTracker</title>
+  <title>GalloTracker</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -29,8 +29,107 @@
       background: var(--background);
       color: var(--text-light);
       line-height: 1.6;
+      padding-bottom: 70px; /* Espacio para el menú inferior */
     }
 
+    /* Header */
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      background: var(--card-bg);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+    }
+
+    .logo-text {
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .search-container {
+      position: relative;
+    }
+
+    .search-icon {
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text-light);
+    }
+
+    .search-input {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      width: 250px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: var(--border-radius);
+      background: var(--card-bg);
+      color: var(--text-light);
+      box-shadow: var(--box-shadow);
+      display: none;
+      z-index: 101;
+    }
+
+    .search-input.active {
+      display: block;
+    }
+
+    .search-results {
+      position: absolute;
+      top: 140%;
+      right: 0;
+      width: 250px;
+      max-height: 300px;
+      overflow-y: auto;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      display: none;
+      z-index: 102;
+    }
+
+    .search-results.active {
+      display: block;
+    }
+
+    .search-result-item {
+      padding: 10px 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .search-result-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .search-result-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    /* Contenido principal */
     .container {
       max-width: 100%;
       padding: 15px;
@@ -181,19 +280,23 @@
       transform: scale(1.02);
     }
 
-    .post-video {
-      width: 100%;
-      border-radius: var(--border-radius);
-      cursor: pointer;
-    }
-
+    /* Estilos para videos */
     .video-wrapper {
       position: relative;
       width: 100%;
-      padding-bottom: 56.25%; /* 16:9 aspect ratio */
       background: #000;
       border-radius: var(--border-radius);
       overflow: hidden;
+    }
+
+    /* Video normal (16:9) */
+    .video-wrapper.normal {
+      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    }
+
+    /* Video short (9:16) */
+    .video-wrapper.short {
+      padding-bottom: 177.78%; /* 9:16 aspect ratio */
     }
 
     .video-wrapper video {
@@ -388,56 +491,6 @@
       cursor: pointer;
     }
 
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text-gray);
-    }
-
-    .empty-state i {
-      font-size: 50px;
-      margin-bottom: 15px;
-      color: rgba(255, 255, 255, 0.1);
-    }
-
-    .empty-state p {
-      margin-top: 10px;
-    }
-
-    /* Modal de imagen ampliada */
-    .image-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.9);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .image-modal-content {
-      max-width: 90%;
-      max-height: 90%;
-    }
-
-    .image-modal-content img {
-      max-width: 100%;
-      max-height: 90vh;
-      object-fit: contain;
-    }
-
-    .close-image-modal {
-      position: absolute;
-      top: 20px;
-      right: 30px;
-      color: white;
-      font-size: 40px;
-      cursor: pointer;
-    }
-
     /* Perfil de usuario */
     .profile-container {
       display: none;
@@ -566,6 +619,93 @@
       cursor: pointer;
     }
 
+    /* Menú inferior */
+    .bottom-menu {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card-bg);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 100;
+    }
+
+    .menu-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--text-gray);
+      text-decoration: none;
+      font-size: 12px;
+      transition: color 0.3s ease;
+    }
+
+    .menu-item:hover {
+      color: var(--primary-color);
+    }
+
+    .menu-item i {
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+
+    .menu-item.home {
+      background: var(--primary-color);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      transform: translateY(-15px);
+      box-shadow: 0 4px 10px rgba(254, 44, 85, 0.3);
+    }
+
+    .menu-item.home i {
+      font-size: 24px;
+      margin-bottom: 0;
+    }
+
+    /* Modal de imagen ampliada */
+    .image-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .image-modal-content {
+      max-width: 90%;
+      max-height: 90%;
+    }
+
+    .image-modal-content img {
+      max-width: 100%;
+      max-height: 90vh;
+      object-fit: contain;
+    }
+
+    .close-image-modal {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      color: white;
+      font-size: 40px;
+      cursor: pointer;
+    }
+
+    /* Notificación */
     .notification {
       position: fixed;
       top: 20px;
@@ -614,21 +754,34 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Encabezado y filtros -->
-    <div class="header">
-      <h1 class="page-title">Publicaciones Recientes</h1>
-      <div class="filter-controls">
-        <button class="filter-btn active" onclick="filterPosts('all')">Todos</button>
-        <button class="filter-btn" onclick="filterPosts('gallos')">Gallos</button>
-        <button class="filter-btn" onclick="filterPosts('entrenamientos')">Entrenamientos</button>
-        <button class="filter-btn" onclick="filterPosts('peleas')">Peleas</button>
-      </div>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="logo-container">
+      <img src="img/logo.png" alt="Logo" class="logo-img">
+      <span class="logo-text">GalloTracker</span>
     </div>
+    
+    <div class="search-container">
+      <i class="fas fa-search search-icon" onclick="toggleSearch()"></i>
+      <input type="text" class="search-input" placeholder="Buscar usuarios..." oninput="searchUsers(this.value)">
+      <div class="search-results" id="searchResults"></div>
+    </div>
+  </header>
 
-    <!-- Contenedor principal -->
+  <!-- Contenido principal -->
+  <div class="container">
+    <!-- Vista de publicaciones -->
     <div id="mainContent">
-      <!-- Vista de publicaciones -->
+      <div class="header">
+        <h1 class="page-title">Publicaciones Recientes</h1>
+        <div class="filter-controls">
+          <button class="filter-btn active" onclick="filterPosts('all')">Todos</button>
+          <button class="filter-btn" onclick="filterPosts('gallos')">Gallos</button>
+          <button class="filter-btn" onclick="filterPosts('entrenamientos')">Entrenamientos</button>
+          <button class="filter-btn" onclick="filterPosts('peleas')">Peleas</button>
+        </div>
+      </div>
+
       <div class="posts-container" id="postsContainer">
         <div class="empty-state">
           <i class="fas fa-spinner fa-spin"></i>
@@ -685,6 +838,21 @@
       </div>
     </div>
   </div>
+
+  <!-- Menú inferior -->
+  <nav class="bottom-menu">
+    <a href="perfil.html" class="menu-item">
+      <i class="fas fa-user"></i>
+      <span>Perfil</span>
+    </a>
+    <a href="index.html" class="menu-item home">
+      <i class="fas fa-home"></i>
+    </a>
+    <a href="configuracion.html" class="menu-item">
+      <i class="fas fa-cog"></i>
+      <span>Configuración</span>
+    </a>
+  </nav>
 
   <!-- Modal de imagen ampliada -->
   <div class="image-modal" id="imageModal">
@@ -746,6 +914,63 @@
         }
       });
     });
+
+    // Alternar búsqueda
+    function toggleSearch() {
+      const searchInput = document.querySelector('.search-input');
+      const searchResults = document.getElementById('searchResults');
+      
+      searchInput.classList.toggle('active');
+      searchResults.classList.remove('active');
+      
+      if (searchInput.classList.contains('active')) {
+        searchInput.focus();
+      }
+    }
+
+    // Buscar usuarios
+    async function searchUsers(query) {
+      const searchResults = document.getElementById('searchResults');
+      
+      if (query.length < 2) {
+        searchResults.innerHTML = '';
+        searchResults.classList.remove('active');
+        return;
+      }
+      
+      try {
+        const usersSnapshot = await db.collection('users')
+          .where('displayName', '>=', query)
+          .where('displayName', '<=', query + '\uf8ff')
+          .limit(10)
+          .get();
+        
+        if (usersSnapshot.empty) {
+          searchResults.innerHTML = '<div class="search-result-item">No se encontraron usuarios</div>';
+          searchResults.classList.add('active');
+          return;
+        }
+        
+        searchResults.innerHTML = '';
+        usersSnapshot.forEach(doc => {
+          const user = doc.data();
+          if (doc.id !== currentUser.uid) {
+            const item = document.createElement('div');
+            item.className = 'search-result-item';
+            item.innerHTML = `
+              <img src="${user.photoURL || 'img/default-profile.jpg'}" class="search-result-avatar">
+              <span>${user.displayName || 'Usuario'}</span>
+            `;
+            item.onclick = () => viewUserProfile(doc.id);
+            searchResults.appendChild(item);
+          }
+        });
+        
+        searchResults.classList.add('active');
+      } catch (error) {
+        console.error("Error al buscar usuarios:", error);
+      }
+    }
 
     // Configurar controles de video
     function setupVideoControls() {
@@ -872,8 +1097,10 @@
             </div>
           `;
         } else {
+          // Determinar si es un video short (vertical) o normal (horizontal)
+          const isShortVideo = post.isShort || false;
           mediaContent = `
-            <div class="video-wrapper">
+            <div class="video-wrapper ${isShortVideo ? 'short' : 'normal'}">
               <video class="post-video" preload="metadata">
                 <source src="${post.mediaUrl}#t=0.1" type="video/mp4">
                 Tu navegador no soporta videos HTML5.
@@ -1056,7 +1283,7 @@
       }
     }
 
-    // Cargar publicaciones del perfil
+    // Cargar publicaciones del perfil (CORREGIDO)
     async function loadProfilePosts(userId) {
       try {
         const [gallosSnapshot, entrenamientosSnapshot, peleasSnapshot] = await Promise.all([
@@ -1068,7 +1295,22 @@
         const postsGrid = document.getElementById('profilePostsGrid');
         postsGrid.innerHTML = '';
         
-        if (gallosSnapshot.empty && entrenamientosSnapshot.empty && peleasSnapshot.empty) {
+        // Combinar todas las publicaciones
+        const allPosts = [];
+        
+        gallosSnapshot.forEach(doc => {
+          allPosts.push({...doc.data(), id: doc.id, type: 'gallos'});
+        });
+        
+        entrenamientosSnapshot.forEach(doc => {
+          allPosts.push({...doc.data(), id: doc.id, type: 'entrenamientos'});
+        });
+        
+        peleasSnapshot.forEach(doc => {
+          allPosts.push({...doc.data(), id: doc.id, type: 'peleas'});
+        });
+        
+        if (allPosts.length === 0) {
           postsGrid.innerHTML = `
             <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-gray);">
               <i class="fas fa-box-open" style="font-size: 30px;"></i>
@@ -1078,34 +1320,42 @@
           return;
         }
         
-        // Procesar gallos
-        gallosSnapshot.forEach(doc => {
-          const post = doc.data();
-          postsGrid.innerHTML += `
-            <div class="profile-post" onclick="viewPostDetail('gallos', '${doc.id}')">
-              <img src="${post.mediaUrl}" alt="${post.title}" onerror="this.onerror=null;this.src='img/default-image.jpg'">
-            </div>
-          `;
+        // Ordenar por fecha (más reciente primero)
+        allPosts.sort((a, b) => {
+          const dateA = a.timestamp?.toDate() || new Date(0);
+          const dateB = b.timestamp?.toDate() || new Date(0);
+          return dateB - dateA;
         });
         
-        // Procesar entrenamientos y peleas (videos)
-        [...entrenamientosSnapshot.docs, ...peleasSnapshot.docs].forEach(doc => {
-          const post = doc.data();
-          const type = post.type || (doc.ref.parent.id === 'PublicEntrenamiento' ? 'entrenamientos' : 'peleas');
-          
-          postsGrid.innerHTML += `
-            <div class="profile-post" onclick="viewPostDetail('${type}', '${doc.id}')">
-              <video>
-                <source src="${post.mediaUrl}#t=0.1" type="video/mp4">
-              </video>
-              <div class="video-icon">
-                <i class="fas fa-play"></i>
+        // Mostrar publicaciones
+        allPosts.forEach(post => {
+          if (post.type === 'gallos') {
+            postsGrid.innerHTML += `
+              <div class="profile-post" onclick="viewPostDetail('${post.type}', '${post.id}')">
+                <img src="${post.mediaUrl}" alt="${post.title}" onerror="this.onerror=null;this.src='img/default-image.jpg'">
               </div>
-            </div>
-          `;
+            `;
+          } else {
+            postsGrid.innerHTML += `
+              <div class="profile-post" onclick="viewPostDetail('${post.type}', '${post.id}')">
+                <video>
+                  <source src="${post.mediaUrl}#t=0.1" type="video/mp4">
+                </video>
+                <div class="video-icon">
+                  <i class="fas fa-play"></i>
+                </div>
+              </div>
+            `;
+          }
         });
       } catch (error) {
         console.error("Error al cargar publicaciones del perfil:", error);
+        postsGrid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-gray);">
+            <i class="fas fa-exclamation-triangle" style="font-size: 30px;"></i>
+            <p>Error al cargar publicaciones</p>
+          </div>
+        `;
       }
     }
 
