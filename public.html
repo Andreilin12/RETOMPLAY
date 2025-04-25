@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Publicaciones - GalloTracker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #fe2c55;
+      --primary-dark: #e61e40;
+      --secondary-color: #25F4EE;
+      --background: #121212;
+      --card-bg: #1e1e1e;
+      --text-light: #ffffff;
+      --text-gray: #a8a8a8;
+      --border-radius: 12px;
+      --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--background);
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 100%;
+      padding: 15px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .filter-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .filter-btn {
+      padding: 8px 15px;
+      border: none;
+      border-radius: var(--border-radius);
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-light);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .filter-btn.active {
+      background: var(--primary-color);
+    }
+
+    .filter-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .posts-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .post-card {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: var(--box-shadow);
+      transition: transform 0.3s ease;
+    }
+
+    .post-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .post-header {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      cursor: pointer;
+    }
+
+    .user-info {
+      flex: 1;
+    }
+
+    .user-name {
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .user-name:hover {
+      color: var(--primary-color);
+    }
+
+    .post-time {
+      font-size: 12px;
+      color: var(--text-gray);
+    }
+
+    .follow-btn {
+      padding: 5px 10px;
+      border: none;
+      border-radius: var(--border-radius);
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-follow {
+      background: var(--secondary-color);
+      color: #000;
+    }
+
+    .btn-following {
+      background: transparent;
+      color: var(--text-light);
+      border: 1px solid var(--text-gray);
+    }
+
+    .post-content {
+      padding: 15px;
+    }
+
+    .post-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .post-description {
+      margin-bottom: 15px;
+      color: var(--text-gray);
+    }
+
+    .post-media-container {
+      position: relative;
+      width: 100%;
+      margin-bottom: 15px;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+    }
+
+    .post-image {
+      width: 100%;
+      max-height: 300px;
+      object-fit: cover;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .post-image:hover {
+      transform: scale(1.02);
+    }
+
+    .post-video {
+      width: 100%;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+    }
+
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+      background: #000;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+    }
+
+    .video-wrapper video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .video-controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .video-wrapper:hover .video-controls {
+      opacity: 1;
+    }
+
+    .play-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    .progress-bar {
+      flex: 1;
+      height: 4px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+      margin-right: 10px;
+      position: relative;
+    }
+
+    .progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: var(--primary-color);
+      border-radius: 2px;
+    }
+
+    .volume-control {
+      display: flex;
+      align-items: center;
+      margin-right: 10px;
+    }
+
+    .volume-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .volume-slider {
+      width: 60px;
+      height: 4px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+      margin-left: 5px;
+    }
+
+    .fullscreen-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .post-footer {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .post-actions {
+      display: flex;
+      gap: 15px;
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: none;
+      border: none;
+      color: var(--text-light);
+      cursor: pointer;
+    }
+
+    .action-btn i {
+      transition: color 0.3s ease;
+    }
+
+    .action-btn:hover i {
+      color: var(--primary-color);
+    }
+
+    .liked {
+      color: var(--primary-color);
+    }
+
+    .post-stats {
+      font-size: 12px;
+      color: var(--text-gray);
+    }
+
+    .comments-section {
+      padding: 0 15px 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: none;
+    }
+
+    .comments-list {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+    }
+
+    .comment {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .comment-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .comment-content {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 8px 12px;
+      border-radius: 18px;
+    }
+
+    .comment-user {
+      font-weight: bold;
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+
+    .comment-text {
+      font-size: 14px;
+    }
+
+    .comment-form {
+      display: flex;
+      gap: 10px;
+    }
+
+    .comment-input {
+      flex: 1;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-light);
+    }
+
+    .comment-input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .comment-submit {
+      padding: 0 15px;
+      border: none;
+      border-radius: 18px;
+      background: var(--primary-color);
+      color: white;
+      cursor: pointer;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-gray);
+    }
+
+    .empty-state i {
+      font-size: 50px;
+      margin-bottom: 15px;
+      color: rgba(255, 255, 255, 0.1);
+    }
+
+    .empty-state p {
+      margin-top: 10px;
+    }
+
+    /* Modal de imagen ampliada */
+    .image-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .image-modal-content {
+      max-width: 90%;
+      max-height: 90%;
+    }
+
+    .image-modal-content img {
+      max-width: 100%;
+      max-height: 90vh;
+      object-fit: contain;
+    }
+
+    .close-image-modal {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      color: white;
+      font-size: 40px;
+      cursor: pointer;
+    }
+
+    /* Perfil de usuario */
+    .profile-container {
+      display: none;
+      padding: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--primary-color);
+    }
+
+    .profile-info {
+      flex: 1;
+    }
+
+    .profile-name {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .profile-email {
+      color: var(--text-gray);
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .profile-stats {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .profile-stat {
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .stat-number {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-gray);
+    }
+
+    .profile-posts-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .profile-posts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .profile-post {
+      aspect-ratio: 1;
+      border-radius: 5px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .profile-post img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .profile-post:hover img {
+      transform: scale(1.05);
+    }
+
+    .profile-post video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .video-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 24px;
+      background: rgba(0,0,0,0.5);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .back-to-posts {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 20px;
+      color: var(--primary-color);
+      cursor: pointer;
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: var(--border-radius);
+      background: var(--primary-color);
+      color: white;
+      box-shadow: var(--box-shadow);
+      z-index: 1100;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateX(200%);
+      transition: transform 0.3s ease;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .notification.success {
+      background: #28a745;
+    }
+
+    .notification.error {
+      background: #dc3545;
+    }
+
+    @media (min-width: 768px) {
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+    }
+
+    @media (min-width: 992px) {
+      .container {
+        max-width: 1000px;
+      }
+
+      .profile-posts-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Encabezado y filtros -->
+    <div class="header">
+      <h1 class="page-title">Publicaciones Recientes</h1>
+      <div class="filter-controls">
+        <button class="filter-btn active" onclick="filterPosts('all')">Todos</button>
+        <button class="filter-btn" onclick="filterPosts('gallos')">Gallos</button>
+        <button class="filter-btn" onclick="filterPosts('entrenamientos')">Entrenamientos</button>
+        <button class="filter-btn" onclick="filterPosts('peleas')">Peleas</button>
+      </div>
+    </div>
+
+    <!-- Contenedor principal -->
+    <div id="mainContent">
+      <!-- Vista de publicaciones -->
+      <div class="posts-container" id="postsContainer">
+        <div class="empty-state">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Cargando publicaciones...</p>
+        </div>
+      </div>
+
+      <!-- Vista de perfil de usuario -->
+      <div class="profile-container" id="profileContainer">
+        <div class="back-to-posts" onclick="showPostsView()">
+          <i class="fas fa-arrow-left"></i>
+          <span>Volver a publicaciones</span>
+        </div>
+        
+        <div class="profile-header">
+          <img id="profileAvatar" src="img/default-profile.jpg" alt="Perfil" class="profile-avatar">
+          <div class="profile-info">
+            <h2 class="profile-name" id="profileUserName">Usuario</h2>
+            <div class="profile-email" id="profileUserEmail">email@ejemplo.com</div>
+            <button class="follow-btn" id="profileFollowBtn" onclick="toggleFollow(currentProfileUserId, this)">
+              <i class="fas fa-user-plus"></i> Seguir
+            </button>
+          </div>
+        </div>
+        
+        <div class="profile-stats">
+          <div class="profile-stat" onclick="showProfilePosts()">
+            <div class="stat-number" id="profilePostsCount">0</div>
+            <div class="stat-label">Publicaciones</div>
+          </div>
+          <div class="profile-stat" onclick="showProfileFollowers()">
+            <div class="stat-number" id="profileFollowersCount">0</div>
+            <div class="stat-label">Seguidores</div>
+          </div>
+          <div class="profile-stat" onclick="showProfileFollowing()">
+            <div class="stat-number" id="profileFollowingCount">0</div>
+            <div class="stat-label">Seguidos</div>
+          </div>
+        </div>
+        
+        <h3 class="profile-posts-title" id="profileSectionTitle">Publicaciones</h3>
+        
+        <div class="profile-posts-grid" id="profilePostsGrid">
+          <!-- Las publicaciones del usuario se cargarán aquí -->
+        </div>
+        
+        <div id="profileFollowersList" style="display: none;">
+          <!-- Lista de seguidores se cargará aquí -->
+        </div>
+        
+        <div id="profileFollowingList" style="display: none;">
+          <!-- Lista de seguidos se cargará aquí -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de imagen ampliada -->
+  <div class="image-modal" id="imageModal">
+    <span class="close-image-modal" onclick="closeImageModal()">&times;</span>
+    <div class="image-modal-content">
+      <img id="expandedImage" src="" alt="Imagen ampliada">
+    </div>
+  </div>
+
+  <!-- Notificación -->
+  <div class="notification" id="notification">
+    <i class="fas fa-check-circle"></i>
+    <span id="notificationText">Operación exitosa</span>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+  <script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDLi-egzQlgbKW8XV_qIhU6313Gd8gocCg",
+      authDomain: "inventario-35d6b.firebaseapp.com",
+      databaseURL: "https://inventario-35d6b-default-rtdb.firebaseio.com",
+      projectId: "inventario-35d6b",
+      storageBucket: "inventario-35d6b.appspot.com",
+      messagingSenderId: "266100399659",
+      appId: "1:266100399659:web:92358d28cbd803c8a7d46e"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // Variables globales
+    let currentUser = null;
+    let allPosts = [];
+    let currentFilter = 'all';
+    let currentProfileUserId = null;
+    let currentProfileUserData = null;
+    let currentVideo = null;
+
+    // Inicializar la aplicación
+    document.addEventListener('DOMContentLoaded', () => {
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          currentUser = user;
+          loadAllPosts();
+          
+          // Configurar eventos de video
+          setupVideoControls();
+        } else {
+          window.location.href = 'login.html';
+        }
+      });
+    });
+
+    // Configurar controles de video
+    function setupVideoControls() {
+      document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('post-video') || e.target.closest('.video-wrapper')) {
+          const videoWrapper = e.target.classList.contains('post-video') ? 
+            e.target.parentElement : e.target.closest('.video-wrapper');
+          toggleVideoPlay(videoWrapper);
+        }
+        
+        if (e.target.classList.contains('play-btn')) {
+          const videoWrapper = e.target.closest('.video-wrapper');
+          toggleVideoPlay(videoWrapper);
+        }
+        
+        if (e.target.classList.contains('fullscreen-btn')) {
+          const videoWrapper = e.target.closest('.video-wrapper');
+          toggleFullscreen(videoWrapper);
+        }
+      });
+    }
+
+    // Alternar reproducción de video
+    function toggleVideoPlay(videoWrapper) {
+      const video = videoWrapper.querySelector('video');
+      if (video.paused) {
+        video.play();
+        videoWrapper.querySelector('.play-btn i').className = 'fas fa-pause';
+      } else {
+        video.pause();
+        videoWrapper.querySelector('.play-btn i').className = 'fas fa-play';
+      }
+    }
+
+    // Alternar pantalla completa
+    function toggleFullscreen(videoWrapper) {
+      if (!document.fullscreenElement) {
+        videoWrapper.requestFullscreen().catch(err => {
+          console.error(`Error al intentar entrar en pantalla completa: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    // Cargar todas las publicaciones
+    async function loadAllPosts() {
+      try {
+        console.log("Cargando todas las publicaciones...");
+        
+        // Obtener publicaciones de todas las colecciones
+        const [gallosSnapshot, entrenamientosSnapshot, peleasSnapshot] = await Promise.all([
+          db.collection('PublicGallo').orderBy('timestamp', 'desc').get(),
+          db.collection('PublicEntrenamiento').orderBy('timestamp', 'desc').get(),
+          db.collection('PublicPelea').orderBy('timestamp', 'desc').get()
+        ]);
+        
+        // Procesar todas las publicaciones
+        allPosts = [];
+        
+        gallosSnapshot.forEach(doc => {
+          allPosts.push({...doc.data(), id: doc.id, type: 'gallos'});
+        });
+        
+        entrenamientosSnapshot.forEach(doc => {
+          allPosts.push({...doc.data(), id: doc.id, type: 'entrenamientos'});
+        });
+        
+        peleasSnapshot.forEach(doc => {
+          allPosts.push({...doc.data(), id: doc.id, type: 'peleas'});
+        });
+        
+        console.log(`Se encontraron ${allPosts.length} publicaciones`);
+        
+        // Mostrar publicaciones
+        displayPosts(allPosts);
+      } catch (error) {
+        console.error("Error al cargar publicaciones:", error);
+        showNotification('Error al cargar publicaciones', 'error');
+      }
+    }
+
+    // Mostrar publicaciones en el contenedor
+    function displayPosts(posts) {
+      const container = document.getElementById('postsContainer');
+      
+      if (posts.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-box-open"></i>
+            <p>No hay publicaciones disponibles</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      posts.forEach(post => {
+        // Formatear fecha
+        let postDate = 'Fecha no disponible';
+        if (post.timestamp && post.timestamp.toDate) {
+          try {
+            postDate = post.timestamp.toDate().toLocaleDateString('es-ES', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          } catch (error) {
+            console.error("Error al formatear fecha:", error);
+          }
+        }
+        
+        // Determinar el contenido multimedia según el tipo
+        let mediaContent = '';
+        if (post.type === 'gallos') {
+          mediaContent = `
+            <div class="post-media-container">
+              <img src="${post.mediaUrl}" alt="${post.title}" class="post-image" 
+                   onclick="expandImage('${post.mediaUrl}')" 
+                   onerror="this.onerror=null;this.src='img/default-image.jpg'">
+            </div>
+          `;
+        } else {
+          mediaContent = `
+            <div class="video-wrapper">
+              <video class="post-video" preload="metadata">
+                <source src="${post.mediaUrl}#t=0.1" type="video/mp4">
+                Tu navegador no soporta videos HTML5.
+              </video>
+              <div class="video-controls">
+                <button class="play-btn"><i class="fas fa-play"></i></button>
+                <div class="progress-bar"><div class="progress"></div></div>
+                <div class="volume-control">
+                  <button class="volume-btn"><i class="fas fa-volume-up"></i></button>
+                  <input type="range" class="volume-slider" min="0" max="1" step="0.1" value="1">
+                </div>
+                <button class="fullscreen-btn"><i class="fas fa-expand"></i></button>
+              </div>
+            </div>
+          `;
+        }
+        
+        // Crear elemento de publicación
+        const postElement = document.createElement('div');
+        postElement.className = 'post-card';
+        postElement.innerHTML = `
+          <div class="post-header">
+            <img src="${post.userPhotoURL || 'img/default-profile.jpg'}" alt="Avatar" class="user-avatar" 
+                 onclick="viewUserProfile('${post.userId}')">
+            <div class="user-info">
+              <div class="user-name" onclick="viewUserProfile('${post.userId}')">${post.userDisplayName || 'Usuario'}</div>
+              <div class="post-time">${postDate}</div>
+            </div>
+            ${post.userId !== currentUser.uid ? 
+              `<button class="follow-btn" id="followBtn-${post.userId}" onclick="toggleFollow('${post.userId}', this)">
+                <i class="fas fa-user-plus"></i> Seguir
+              </button>` : ''
+            }
+          </div>
+          <div class="post-content">
+            <h3 class="post-title">${post.title || 'Sin título'}</h3>
+            <p class="post-description">${post.description || 'Sin descripción'}</p>
+            ${mediaContent}
+          </div>
+          <div class="post-footer">
+            <div class="post-actions">
+              <button class="action-btn" onclick="toggleLike('${post.type}', '${post.id}', this)">
+                <i class="fas fa-heart"></i> Me gusta
+              </button>
+              <button class="action-btn" onclick="toggleComments('${post.type}', '${post.id}', this)">
+                <i class="fas fa-comment"></i> Comentar
+              </button>
+            </div>
+            <div class="post-stats">
+              <span><i class="fas fa-heart"></i> ${post.likes || 0} likes</span>
+              <span style="margin-left: 10px;"><i class="fas fa-comment"></i> ${post.comments || 0} comentarios</span>
+            </div>
+          </div>
+          <div class="comments-section" id="comments-${post.id}">
+            <div class="comments-list" id="commentsList-${post.id}">
+              <!-- Los comentarios se cargarán aquí -->
+            </div>
+            <form class="comment-form" onsubmit="postComment('${post.type}', '${post.id}', event)">
+              <input type="text" class="comment-input" placeholder="Escribe un comentario..." required>
+              <button type="submit" class="comment-submit">Publicar</button>
+            </form>
+          </div>
+        `;
+        
+        container.appendChild(postElement);
+        
+        // Configurar estado del botón de seguir
+        if (post.userId !== currentUser.uid) {
+          setupFollowButton(post.userId);
+        }
+        
+        // Configurar estado del like
+        checkLikeStatus(post.type, post.id);
+      });
+    }
+
+    // Expandir imagen
+    function expandImage(imageUrl) {
+      const modal = document.getElementById('imageModal');
+      const img = document.getElementById('expandedImage');
+      img.src = imageUrl;
+      modal.style.display = 'flex';
+    }
+
+    // Cerrar modal de imagen
+    function closeImageModal() {
+      document.getElementById('imageModal').style.display = 'none';
+    }
+
+    // Filtrar publicaciones
+    function filterPosts(type) {
+      currentFilter = type;
+      
+      // Actualizar botones de filtro
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Filtrar publicaciones
+      let filteredPosts = allPosts;
+      if (type !== 'all') {
+        filteredPosts = allPosts.filter(post => post.type === type);
+      }
+      
+      // Mostrar publicaciones filtradas
+      displayPosts(filteredPosts);
+    }
+
+    // Ver perfil de usuario
+    async function viewUserProfile(userId) {
+      currentProfileUserId = userId;
+      
+      try {
+        // Cargar datos del usuario
+        const userDoc = await db.collection('users').doc(userId).get();
+        
+        if (!userDoc.exists) {
+          showNotification('Perfil no encontrado', 'error');
+          return;
+        }
+        
+        currentProfileUserData = userDoc.data();
+        
+        // Mostrar datos del usuario
+        document.getElementById('profileUserName').textContent = currentProfileUserData.displayName || 'Usuario';
+        document.getElementById('profileUserEmail').textContent = currentProfileUserData.email || '';
+        document.getElementById('profileAvatar').src = currentProfileUserData.photoURL || 'img/default-profile.jpg';
+        
+        // Ocultar botón de seguir si es el perfil propio
+        if (userId === currentUser.uid) {
+          document.getElementById('profileFollowBtn').style.display = 'none';
+        } else {
+          document.getElementById('profileFollowBtn').style.display = 'block';
+          setupFollowButton(userId, 'profileFollowBtn');
+        }
+        
+        // Cargar estadísticas
+        loadProfileStats(userId);
+        
+        // Cargar publicaciones del usuario
+        loadProfilePosts(userId);
+        
+        // Mostrar vista de perfil
+        showProfileView();
+      } catch (error) {
+        console.error("Error al cargar perfil:", error);
+        showNotification('Error al cargar perfil', 'error');
+      }
+    }
+
+    // Cargar estadísticas del perfil
+    async function loadProfileStats(userId) {
+      try {
+        // Contar publicaciones
+        const [gallosCount, entrenamientosCount, peleasCount] = await Promise.all([
+          db.collection('PublicGallo').where('userId', '==', userId).get(),
+          db.collection('PublicEntrenamiento').where('userId', '==', userId).get(),
+          db.collection('PublicPelea').where('userId', '==', userId).get()
+        ]);
+        
+        const totalPosts = gallosCount.size + entrenamientosCount.size + peleasCount.size;
+        document.getElementById('profilePostsCount').textContent = totalPosts;
+        
+        // Contar seguidores
+        const followersSnapshot = await db.collection('followers')
+          .doc(userId)
+          .collection('userFollowers')
+          .get();
+        document.getElementById('profileFollowersCount').textContent = followersSnapshot.size;
+        
+        // Contar seguidos
+        const followingSnapshot = await db.collection('followers')
+          .doc(userId)
+          .collection('userFollowing')
+          .get();
+        document.getElementById('profileFollowingCount').textContent = followingSnapshot.size;
+      } catch (error) {
+        console.error("Error al cargar estadísticas:", error);
+      }
+    }
+
+    // Cargar publicaciones del perfil
+    async function loadProfilePosts(userId) {
+      try {
+        const [gallosSnapshot, entrenamientosSnapshot, peleasSnapshot] = await Promise.all([
+          db.collection('PublicGallo').where('userId', '==', userId).orderBy('timestamp', 'desc').get(),
+          db.collection('PublicEntrenamiento').where('userId', '==', userId).orderBy('timestamp', 'desc').get(),
+          db.collection('PublicPelea').where('userId', '==', userId).orderBy('timestamp', 'desc').get()
+        ]);
+        
+        const postsGrid = document.getElementById('profilePostsGrid');
+        postsGrid.innerHTML = '';
+        
+        if (gallosSnapshot.empty && entrenamientosSnapshot.empty && peleasSnapshot.empty) {
+          postsGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-gray);">
+              <i class="fas fa-box-open" style="font-size: 30px;"></i>
+              <p>No hay publicaciones</p>
+            </div>
+          `;
+          return;
+        }
+        
+        // Procesar gallos
+        gallosSnapshot.forEach(doc => {
+          const post = doc.data();
+          postsGrid.innerHTML += `
+            <div class="profile-post" onclick="viewPostDetail('gallos', '${doc.id}')">
+              <img src="${post.mediaUrl}" alt="${post.title}" onerror="this.onerror=null;this.src='img/default-image.jpg'">
+            </div>
+          `;
+        });
+        
+        // Procesar entrenamientos y peleas (videos)
+        [...entrenamientosSnapshot.docs, ...peleasSnapshot.docs].forEach(doc => {
+          const post = doc.data();
+          const type = post.type || (doc.ref.parent.id === 'PublicEntrenamiento' ? 'entrenamientos' : 'peleas');
+          
+          postsGrid.innerHTML += `
+            <div class="profile-post" onclick="viewPostDetail('${type}', '${doc.id}')">
+              <video>
+                <source src="${post.mediaUrl}#t=0.1" type="video/mp4">
+              </video>
+              <div class="video-icon">
+                <i class="fas fa-play"></i>
+              </div>
+            </div>
+          `;
+        });
+      } catch (error) {
+        console.error("Error al cargar publicaciones del perfil:", error);
+      }
+    }
+
+    // Mostrar vista de perfil
+    function showProfileView() {
+      document.getElementById('postsContainer').style.display = 'none';
+      document.getElementById('profileContainer').style.display = 'block';
+      
+      // Mostrar sección de publicaciones por defecto
+      showProfilePosts();
+    }
+
+    // Mostrar vista de publicaciones
+    function showPostsView() {
+      document.getElementById('profileContainer').style.display = 'none';
+      document.getElementById('postsContainer').style.display = 'flex';
+    }
+
+    // Mostrar publicaciones en el perfil
+    function showProfilePosts() {
+      document.getElementById('profilePostsGrid').style.display = 'grid';
+      document.getElementById('profileFollowersList').style.display = 'none';
+      document.getElementById('profileFollowingList').style.display = 'none';
+      document.getElementById('profileSectionTitle').textContent = 'Publicaciones';
+    }
+
+    // Mostrar seguidores en el perfil
+    async function showProfileFollowers() {
+      const followersList = document.getElementById('profileFollowersList');
+      followersList.style.display = 'block';
+      document.getElementById('profilePostsGrid').style.display = 'none';
+      document.getElementById('profileFollowingList').style.display = 'none';
+      document.getElementById('profileSectionTitle').textContent = 'Seguidores';
+      
+      try {
+        const followersSnapshot = await db.collection('followers')
+          .doc(currentProfileUserId)
+          .collection('userFollowers')
+          .get();
+        
+        if (followersSnapshot.empty) {
+          followersList.innerHTML = '<p style="color: var(--text-gray); text-align: center;">No tiene seguidores</p>';
+          return;
+        }
+        
+        // Obtener datos de cada seguidor
+        const followersData = await Promise.all(
+          followersSnapshot.docs.map(async doc => {
+            const userDoc = await db.collection('users').doc(doc.id).get();
+            return userDoc.exists ? { ...userDoc.data(), userId: doc.id } : null;
+          })
+        );
+        
+        followersList.innerHTML = followersData.filter(user => user !== null).map(user => `
+          <div style="display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <img src="${user.photoURL || 'img/default-profile.jpg'}" 
+                 alt="Perfil" 
+                 style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer;"
+                 onclick="viewUserProfile('${user.userId}')">
+            <div style="flex: 1; cursor: pointer;" onclick="viewUserProfile('${user.userId}')">
+              <div style="font-weight: bold;">${user.displayName || 'Usuario'}</div>
+              <div style="font-size: 12px; color: var(--text-gray);">${user.email || ''}</div>
+            </div>
+            ${user.userId !== currentUser.uid ? 
+              `<button class="follow-btn" id="followerFollowBtn-${user.userId}" 
+                onclick="toggleFollow('${user.userId}', this)" style="padding: 5px 10px;">
+                <i class="fas fa-user-plus"></i> Seguir
+              </button>` : ''
+            }
+          </div>
+        `).join('');
+        
+        // Configurar botones de seguir
+        followersData.forEach(user => {
+          if (user && user.userId !== currentUser.uid) {
+            setupFollowButton(user.userId, `followerFollowBtn-${user.userId}`);
+          }
+        });
+      } catch (error) {
+        console.error("Error al cargar seguidores:", error);
+        followersList.innerHTML = '<p style="color: var(--text-gray); text-align: center;">Error al cargar seguidores</p>';
+      }
+    }
+
+    // Mostrar seguidos en el perfil
+    async function showProfileFollowing() {
+      const followingList = document.getElementById('profileFollowingList');
+      followingList.style.display = 'block';
+      document.getElementById('profilePostsGrid').style.display = 'none';
+      document.getElementById('profileFollowersList').style.display = 'none';
+      document.getElementById('profileSectionTitle').textContent = 'Seguidos';
+      
+      try {
+        const followingSnapshot = await db.collection('followers')
+          .doc(currentProfileUserId)
+          .collection('userFollowing')
+          .get();
+        
+        if (followingSnapshot.empty) {
+          followingList.innerHTML = '<p style="color: var(--text-gray); text-align: center;">No sigue a nadie</p>';
+          return;
+        }
+        
+        // Obtener datos de cada usuario seguido
+        const followingData = await Promise.all(
+          followingSnapshot.docs.map(async doc => {
+            const userDoc = await db.collection('users').doc(doc.id).get();
+            return userDoc.exists ? { ...userDoc.data(), userId: doc.id } : null;
+          })
+        );
+        
+        followingList.innerHTML = followingData.filter(user => user !== null).map(user => `
+          <div style="display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <img src="${user.photoURL || 'img/default-profile.jpg'}" 
+                 alt="Perfil" 
+                 style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer;"
+                 onclick="viewUserProfile('${user.userId}')">
+            <div style="flex: 1; cursor: pointer;" onclick="viewUserProfile('${user.userId}')">
+              <div style="font-weight: bold;">${user.displayName || 'Usuario'}</div>
+              <div style="font-size: 12px; color: var(--text-gray);">${user.email || ''}</div>
+            </div>
+            ${user.userId !== currentUser.uid ? 
+              `<button class="follow-btn" id="followingFollowBtn-${user.userId}" 
+                onclick="toggleFollow('${user.userId}', this)" style="padding: 5px 10px;">
+                <i class="fas fa-user-plus"></i> Seguir
+              </button>` : ''
+            }
+          </div>
+        `).join('');
+        
+        // Configurar botones de seguir
+        followingData.forEach(user => {
+          if (user && user.userId !== currentUser.uid) {
+            setupFollowButton(user.userId, `followingFollowBtn-${user.userId}`);
+          }
+        });
+      } catch (error) {
+        console.error("Error al cargar seguidos:", error);
+        followingList.innerHTML = '<p style="color: var(--text-gray); text-align: center;">Error al cargar seguidos</p>';
+      }
+    }
+
+    // Configurar botón de seguir
+    async function setupFollowButton(userId, buttonId = null) {
+      const button = buttonId ? 
+        document.getElementById(buttonId) : 
+        document.getElementById(`followBtn-${userId}`);
+      
+      if (!button) return;
+      
+      // Verificar si ya seguimos a este usuario
+      const followDoc = await db.collection('followers')
+        .doc(userId)
+        .collection('userFollowers')
+        .doc(currentUser.uid)
+        .get();
+      
+      if (followDoc.exists) {
+        // Ya lo seguimos
+        button.innerHTML = '<i class="fas fa-user-check"></i> Siguiendo';
+        button.className = 'follow-btn btn-following';
+      } else {
+        // No lo seguimos
+        button.innerHTML = '<i class="fas fa-user-plus"></i> Seguir';
+        button.className = 'follow-btn btn-follow';
+      }
+    }
+
+    // Alternar seguir/dejar de seguir
+    async function toggleFollow(userId, button) {
+      try {
+        const isFollowing = button.classList.contains('btn-following');
+        
+        if (!isFollowing) {
+          // Seguir al usuario
+          await db.collection('followers')
+            .doc(userId)
+            .collection('userFollowers')
+            .doc(currentUser.uid)
+            .set({
+              userId: currentUser.uid,
+              timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          
+          // Agregar a nuestra lista de seguidos
+          await db.collection('followers')
+            .doc(currentUser.uid)
+            .collection('userFollowing')
+            .doc(userId)
+            .set({
+              userId: userId,
+              timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          
+          // Actualizar UI
+          button.innerHTML = '<i class="fas fa-user-check"></i> Siguiendo';
+          button.className = 'follow-btn btn-following';
+          
+          // Actualizar contador si estamos viendo el perfil
+          if (currentProfileUserId === userId) {
+            const currentCount = parseInt(document.getElementById('profileFollowersCount').textContent);
+            document.getElementById('profileFollowersCount').textContent = currentCount + 1;
+          }
+          
+          showNotification('Ahora sigues a este usuario', 'success');
+        } else {
+          // Dejar de seguir
+          await db.collection('followers')
+            .doc(userId)
+            .collection('userFollowers')
+            .doc(currentUser.uid)
+            .delete();
+            
+          await db.collection('followers')
+            .doc(currentUser.uid)
+            .collection('userFollowing')
+            .doc(userId)
+            .delete();
+          
+          // Actualizar UI
+          button.innerHTML = '<i class="fas fa-user-plus"></i> Seguir';
+          button.className = 'follow-btn btn-follow';
+          
+          // Actualizar contador si estamos viendo el perfil
+          if (currentProfileUserId === userId) {
+            const currentCount = parseInt(document.getElementById('profileFollowersCount').textContent);
+            document.getElementById('profileFollowersCount').textContent = Math.max(0, currentCount - 1);
+          }
+          
+          showNotification('Has dejado de seguir a este usuario', 'success');
+        }
+        
+        // Actualizar botones en todas las publicaciones de este usuario
+        document.querySelectorAll(`#followBtn-${userId}`).forEach(btn => {
+          btn.innerHTML = isFollowing ? 
+            '<i class="fas fa-user-plus"></i> Seguir' : 
+            '<i class="fas fa-user-check"></i> Siguiendo';
+          btn.className = isFollowing ? 
+            'follow-btn btn-follow' : 
+            'follow-btn btn-following';
+        });
+      } catch (error) {
+        console.error("Error al actualizar seguimiento:", error);
+        showNotification('Error al actualizar seguimiento', 'error');
+      }
+    }
+
+    // Verificar estado de like
+    async function checkLikeStatus(postType, postId) {
+      try {
+        const likeDoc = await db.collection(getCollectionName(postType))
+          .doc(postId)
+          .collection('likes')
+          .doc(currentUser.uid)
+          .get();
+        
+        if (likeDoc.exists) {
+          const likeBtn = document.querySelector(`#comments-${postId}`).previousElementSibling
+            .querySelector('.action-btn:nth-child(1)');
+          likeBtn.innerHTML = '<i class="fas fa-heart liked"></i> Me gusta';
+        }
+      } catch (error) {
+        console.error("Error al verificar like:", error);
+      }
+    }
+
+    // Alternar like en una publicación
+    async function toggleLike(postType, postId, button) {
+      try {
+        const collectionName = getCollectionName(postType);
+        const likeRef = db.collection(collectionName).doc(postId)
+          .collection('likes').doc(currentUser.uid);
+        
+        const likeDoc = await likeRef.get();
+        
+        if (likeDoc.exists) {
+          // Quitar like
+          await likeRef.delete();
+          await db.collection(collectionName).doc(postId).update({
+            likes: firebase.firestore.FieldValue.increment(-1)
+          });
+          
+          button.innerHTML = '<i class="fas fa-heart"></i> Me gusta';
+          button.querySelector('i').classList.remove('liked');
+        } else {
+          // Dar like
+          await likeRef.set({
+            userId: currentUser.uid,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          await db.collection(collectionName).doc(postId).update({
+            likes: firebase.firestore.FieldValue.increment(1)
+          });
+          
+          button.innerHTML = '<i class="fas fa-heart liked"></i> Me gusta';
+          button.querySelector('i').classList.add('liked');
+        }
+        
+        // Actualizar contador
+        const statsElement = button.closest('.post-footer').querySelector('.post-stats');
+        const likesCount = parseInt(statsElement.textContent.match(/\d+/)[0]);
+        statsElement.innerHTML = `
+          <span><i class="fas fa-heart"></i> ${likeDoc.exists ? likesCount - 1 : likesCount + 1} likes</span>
+          ${statsElement.innerHTML.includes('comentarios') ? 
+            statsElement.innerHTML.split('</span>')[1] : ''}
+        `;
+      } catch (error) {
+        console.error("Error al actualizar like:", error);
+        showNotification('Error al actualizar like', 'error');
+      }
+    }
+
+    // Alternar sección de comentarios
+    async function toggleComments(postType, postId, button) {
+      const commentsSection = document.getElementById(`comments-${postId}`);
+      
+      if (commentsSection.style.display === 'block') {
+        commentsSection.style.display = 'none';
+      } else {
+        commentsSection.style.display = 'block';
+        loadComments(postType, postId);
+      }
+    }
+
+    // Cargar comentarios
+    async function loadComments(postType, postId) {
+      const commentsList = document.getElementById(`commentsList-${postId}`);
+      commentsList.innerHTML = '<div style="text-align: center; padding: 10px;"><i class="fas fa-spinner fa-spin"></i></div>';
+      
+      try {
+        const commentsSnapshot = await db.collection(getCollectionName(postType))
+          .doc(postId)
+          .collection('comments')
+          .orderBy('timestamp', 'desc')
+          .get();
+        
+        if (commentsSnapshot.empty) {
+          commentsList.innerHTML = '<div style="text-align: center; padding: 10px; color: var(--text-gray);">No hay comentarios</div>';
+          return;
+        }
+        
+        // Obtener datos de los usuarios que comentaron
+        const commentsData = await Promise.all(
+          commentsSnapshot.docs.map(async doc => {
+            const commentData = doc.data();
+            const userDoc = await db.collection('users').doc(commentData.userId).get();
+            return {
+              ...commentData,
+              id: doc.id,
+              userData: userDoc.exists ? userDoc.data() : null
+            };
+          })
+        );
+        
+        commentsList.innerHTML = commentsData.map(comment => `
+          <div class="comment">
+            <img src="${comment.userData?.photoURL || 'img/default-profile.jpg'}" 
+                 alt="Avatar" 
+                 class="comment-avatar"
+                 onclick="viewUserProfile('${comment.userId}')">
+            <div class="comment-content">
+              <div class="comment-user" onclick="viewUserProfile('${comment.userId}')">
+                ${comment.userData?.displayName || 'Usuario'}
+              </div>
+              <div class="comment-text">${comment.text}</div>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error("Error al cargar comentarios:", error);
+        commentsList.innerHTML = '<div style="text-align: center; padding: 10px; color: var(--text-gray);">Error al cargar comentarios</div>';
+      }
+    }
+
+    // Publicar comentario
+    async function postComment(postType, postId, event) {
+      event.preventDefault();
+      const form = event.target;
+      const input = form.querySelector('.comment-input');
+      const commentText = input.value.trim();
+      
+      if (!commentText) return;
+      
+      try {
+        // Agregar comentario a Firestore
+        await db.collection(getCollectionName(postType))
+          .doc(postId)
+          .collection('comments')
+          .add({
+            userId: currentUser.uid,
+            text: commentText,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        
+        // Incrementar contador de comentarios
+        await db.collection(getCollectionName(postType))
+          .doc(postId)
+          .update({
+            comments: firebase.firestore.FieldValue.increment(1)
+          });
+        
+        // Limpiar input
+        input.value = '';
+        
+        // Recargar comentarios
+        loadComments(postType, postId);
+        
+        // Actualizar contador en la interfaz
+        const statsElement = form.closest('.post-card').querySelector('.post-stats');
+        const commentsCount = parseInt(statsElement.textContent.match(/comentarios.*?(\d+)/)[1]);
+        statsElement.innerHTML = statsElement.innerHTML.replace(
+          /(<i class="fas fa-comment"><\/i> )\d+/,
+          `$1${commentsCount + 1}`
+        );
+      } catch (error) {
+        console.error("Error al publicar comentario:", error);
+        showNotification('Error al publicar comentario', 'error');
+      }
+    }
+
+    // Ver detalle de una publicación
+    function viewPostDetail(type, postId) {
+      console.log(`Viendo detalle de publicación ${postId} de tipo ${type}`);
+      window.location.href = `detalle.html?type=${type}&id=${postId}`;
+    }
+
+    // Obtener nombre de colección según tipo
+    function getCollectionName(type) {
+      switch(type) {
+        case 'gallos': return 'PublicGallo';
+        case 'entrenamientos': return 'PublicEntrenamiento';
+        case 'peleas': return 'PublicPelea';
+        default: return '';
+      }
+    }
+
+    // Mostrar notificación
+    function showNotification(message, type) {
+      const notification = document.getElementById('notification');
+      const notificationText = document.getElementById('notificationText');
+      
+      notificationText.textContent = message;
+      notification.className = `notification ${type} show`;
+      
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
