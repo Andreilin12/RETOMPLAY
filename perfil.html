@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfil - GalloTracker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #fe2c55;
+      --primary-dark: #e61e40;
+      --secondary-color: #25F4EE;
+      --background: #121212;
+      --card-bg: #1e1e1e;
+      --text-light: #ffffff;
+      --text-gray: #a8a8a8;
+      --border-radius: 12px;
+      --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--background);
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 100%;
+      padding: 15px;
+    }
+
+    .profile-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--box-shadow);
+    }
+
+    .profile-picture-container {
+      position: relative;
+      margin-bottom: 15px;
+    }
+
+    .profile-picture {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--primary-color);
+      box-shadow: 0 0 20px rgba(254, 44, 85, 0.3);
+    }
+
+    .edit-picture {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      background: var(--card-bg);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      cursor: pointer;
+      border: 2px solid var(--primary-color);
+    }
+
+    .profile-info {
+      width: 100%;
+      text-align: center;
+    }
+
+    .username {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .edit-name {
+      margin-left: 8px;
+      color: var(--text-gray);
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .email {
+      color: var(--text-gray);
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+
+    .profile-stats {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 15px;
+      width: 100%;
+    }
+
+    .stat {
+      text-align: center;
+      padding: 0 10px;
+      cursor: pointer;
+    }
+
+    .stat-number {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--text-light);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .profile-actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      width: 100%;
+    }
+
+    .btn {
+      padding: 10px 15px;
+      border: none;
+      border-radius: var(--border-radius);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+      flex: 1;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--text-light);
+      flex: 1;
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-follow {
+      background-color: var(--secondary-color);
+      color: #000;
+    }
+
+    .btn-follow:hover {
+      opacity: 0.9;
+    }
+
+    .btn-following {
+      background-color: transparent;
+      color: var(--text-light);
+      border: 1px solid var(--text-gray);
+    }
+
+    .btn-following:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .privacy-switch {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary-color);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    .privacy-label {
+      font-size: 14px;
+      color: var(--text-light);
+    }
+
+    .tab-menu {
+      display: flex;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 15px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-btn {
+      padding: 12px 15px;
+      border: none;
+      background: none;
+      font-size: 15px;
+      cursor: pointer;
+      color: var(--text-gray);
+      transition: all 0.3s ease;
+      position: relative;
+      white-space: nowrap;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn:hover,
+    .tab-btn.active {
+      color: var(--text-light);
+    }
+
+    .tab-btn.active:after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background-color: var(--primary-color);
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .content-card {
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      background: var(--card-bg);
+      box-shadow: var(--box-shadow);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .content-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .content-media-container {
+      position: relative;
+      width: 100%;
+      height: 180px;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .content-media {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .media-icon {
+      position: absolute;
+      font-size: 40px;
+      color: rgba(255, 255, 255, 0.7);
+      z-index: 1;
+    }
+
+    .content-info {
+      padding: 12px;
+    }
+
+    .content-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .content-description {
+      font-size: 12px;
+      color: var(--text-gray);
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .content-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-gray);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-gray);
+    }
+
+    .empty-state i {
+      font-size: 50px;
+      margin-bottom: 15px;
+      color: rgba(255, 255, 255, 0.1);
+    }
+
+    .empty-state p {
+      margin-top: 10px;
+    }
+
+    .file-input-container {
+      position: relative;
+      margin-top: 10px;
+    }
+
+    .file-input-label {
+      display: block;
+      padding: 12px 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      border-radius: var(--border-radius);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .file-input-label:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--primary-color);
+    }
+
+    .file-input-label i {
+      font-size: 24px;
+      margin-bottom: 5px;
+      color: var(--primary-color);
+    }
+
+    .file-input-label span {
+      display: block;
+      font-size: 14px;
+      color: var(--text-gray);
+    }
+
+    .file-input {
+      position: absolute;
+      width: 0.1px;
+      height: 0.1px;
+      opacity: 0;
+      overflow: hidden;
+      z-index: -1;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 20px;
+      box-shadow: var(--box-shadow);
+      animation: modalFadeIn 0.3s ease;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--text-gray);
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--border-radius);
+      font-size: 15px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-light);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(254, 44, 85, 0.2);
+    }
+
+    textarea.form-control {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .image-preview {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      border-radius: var(--border-radius);
+      margin-top: 10px;
+      display: none;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .video-preview {
+      width: 100%;
+      border-radius: var(--border-radius);
+      margin-top: 10px;
+      display: none;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: var(--border-radius);
+      background: var(--primary-color);
+      color: white;
+      box-shadow: var(--box-shadow);
+      z-index: 1100;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateX(200%);
+      transition: transform 0.3s ease;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .notification.success {
+      background: #28a745;
+    }
+
+    .notification.error {
+      background: #dc3545;
+    }
+
+    @media (min-width: 768px) {
+      .profile-header {
+        flex-direction: row;
+        align-items: flex-start;
+        text-align: left;
+      }
+
+      .profile-picture-container {
+        margin-right: 25px;
+        margin-bottom: 0;
+      }
+
+      .profile-info {
+        text-align: left;
+      }
+
+      .username {
+        justify-content: flex-start;
+      }
+
+      .profile-stats {
+        justify-content: flex-start;
+        gap: 25px;
+      }
+
+      .profile-actions {
+        justify-content: flex-start;
+      }
+
+      .content-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (min-width: 992px) {
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .content-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Perfil del Usuario -->
+    <div class="profile-header">
+      <div class="profile-picture-container">
+        <img id="profilePicture" src="img/default-profile.jpg" alt="Perfil" class="profile-picture">
+        <div class="edit-picture" onclick="openPhotoModal()">
+          <i class="fas fa-camera"></i>
+        </div>
+        <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;">
+      </div>
+      
+      <div class="profile-info">
+        <div class="username">
+          <span id="userName">Cargando...</span>
+          <i class="fas fa-edit edit-name" onclick="openEditNameModal()"></i>
+        </div>
+        <div class="email" id="userEmail">Cargando...</div>
+        
+        <div class="profile-stats">
+          <div class="stat" onclick="window.location.href='publicaciones.html'">
+            <div class="stat-number" id="postCount">0</div>
+            <div class="stat-label">Publicaciones</div>
+          </div>
+          <div class="stat" onclick="window.location.href='seguidores.html'">
+            <div class="stat-number" id="followerCount">0</div>
+            <div class="stat-label">Seguidores</div>
+          </div>
+          <div class="stat" onclick="window.location.href='siguiendo.html'">
+            <div class="stat-number" id="followingCount">0</div>
+            <div class="stat-label">Seguidos</div>
+          </div>
+        </div>
+        
+        <div class="profile-actions">
+          <button class="btn btn-primary" id="followButton">
+            <i class="fas fa-user-plus"></i> Seguir
+          </button>
+          <button class="btn btn-secondary" onclick="shareProfile()">
+            <i class="fas fa-share-alt"></i> Compartir
+          </button>
+        </div>
+        
+        <div class="privacy-switch" id="privacyContainer">
+          <label class="switch">
+            <input type="checkbox" id="privacyToggle">
+            <span class="slider"></span>
+          </label>
+          <span class="privacy-label" id="privacyLabel">Perfil Público</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Pestañas de Contenido -->
+    <div class="tab-menu">
+      <button class="tab-btn active" onclick="openTab('gallos')">
+        <i class="fas fa-feather-alt"></i> Gallos
+      </button>
+      <button class="tab-btn" onclick="openTab('entrenamientos')">
+        <i class="fas fa-dumbbell"></i> Entrenamientos
+      </button>
+      <button class="tab-btn" onclick="openTab('peleas')">
+        <i class="fas fa-trophy"></i> Peleas
+      </button>
+    </div>
+    
+    <!-- Contenido de Gallos -->
+    <div id="gallos" class="tab-content active">
+      <div class="content-header">
+        <button class="btn btn-primary" onclick="openPostModal('gallos')">
+          <i class="fas fa-plus"></i> Nuevo Gallo
+        </button>
+      </div>
+      
+      <div class="content-grid" id="gallosGrid">
+        <div class="empty-state">
+          <i class="fas fa-box-open"></i>
+          <p>No hay gallos registrados todavía</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Contenido de Entrenamientos -->
+    <div id="entrenamientos" class="tab-content">
+      <div class="content-header">
+        <button class="btn btn-primary" onclick="openPostModal('entrenamientos')">
+          <i class="fas fa-plus"></i> Nuevo Entrenamiento
+        </button>
+      </div>
+      
+      <div class="content-grid" id="entrenamientosGrid">
+        <div class="empty-state">
+          <i class="fas fa-box-open"></i>
+          <p>No hay entrenamientos registrados</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Contenido de Peleas -->
+    <div id="peleas" class="tab-content">
+      <div class="content-header">
+        <button class="btn btn-primary" onclick="openPostModal('peleas')">
+          <i class="fas fa-plus"></i> Nueva Pelea
+        </button>
+      </div>
+      
+      <div class="content-grid" id="peleasGrid">
+        <div class="empty-state">
+          <i class="fas fa-box-open"></i>
+          <p>No hay peleas registradas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal para Editar Nombre -->
+  <div class="modal" id="editNameModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Editar Nombre</div>
+        <button class="close-btn" onclick="closeEditNameModal()">&times;</button>
+      </div>
+      <div class="form-group">
+        <label for="newName">Nuevo nombre:</label>
+        <input type="text" id="newName" class="form-control" placeholder="Ingresa tu nuevo nombre">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeEditNameModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveUserName()">Guardar</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal para Cambiar Foto -->
+  <div class="modal" id="photoModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Cambiar Foto de Perfil</div>
+        <button class="close-btn" onclick="closePhotoModal()">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Selecciona una imagen:</label>
+        <div class="file-input-container">
+          <label for="photoInput" class="file-input-label">
+            <i class="fas fa-image"></i>
+            <span>Seleccionar imagen</span>
+          </label>
+          <input type="file" id="photoInput" accept="image/*" class="file-input">
+        </div>
+        <img id="photoPreview" class="image-preview">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closePhotoModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="uploadProfilePhoto()">Subir</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal para Crear Publicación -->
+  <div class="modal" id="postModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="postModalTitle">Nueva Publicación</div>
+        <button class="close-btn" onclick="closePostModal()">&times;</button>
+      </div>
+      <form id="postForm">
+        <input type="hidden" id="postType">
+        <div class="form-group">
+          <label for="postTitle">Título:</label>
+          <input type="text" id="postTitle" class="form-control" placeholder="Título descriptivo" required>
+        </div>
+        <div class="form-group">
+          <label for="postDescription">Descripción:</label>
+          <textarea id="postDescription" class="form-control" placeholder="Agrega una descripción detallada" required></textarea>
+        </div>
+        <div class="form-group">
+          <label id="mediaLabel">Imagen:</label>
+          <div class="file-input-container">
+            <label for="postMedia" class="file-input-label" id="mediaInputLabel">
+              <i class="fas fa-image" id="mediaInputIcon"></i>
+              <span id="mediaInputText">Seleccionar archivo</span>
+            </label>
+            <input type="file" id="postMedia" class="file-input" required>
+          </div>
+          <img id="imagePreview" class="image-preview">
+          <video id="videoPreview" class="video-preview" controls style="display: none;"></video>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closePostModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Publicar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notificación -->
+  <div class="notification" id="notification">
+    <i class="fas fa-check-circle"></i>
+    <span id="notificationText">Operación exitosa</span>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+  
+  <script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDLi-egzQlgbKW8XV_qIhU6313Gd8gocCg",
+      authDomain: "inventario-35d6b.firebaseapp.com",
+      databaseURL: "https://inventario-35d6b-default-rtdb.firebaseio.com",
+      projectId: "inventario-35d6b",
+      storageBucket: "inventario-35d6b.appspot.com",
+      messagingSenderId: "266100399659",
+      appId: "1:266100399659:web:92358d28cbd803c8a7d46e"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // Variables globales
+    let currentUser = null;
+    let userData = {};
+    let currentTab = 'gallos';
+    let isCurrentUserProfile = true;
+    let profileUserId = null;
+
+    // Inicializar la aplicación
+    document.addEventListener('DOMContentLoaded', () => {
+      // Verificar parámetros de URL para ver si es el perfil de otro usuario
+      const urlParams = new URLSearchParams(window.location.search);
+      profileUserId = urlParams.get('id');
+      
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          currentUser = user;
+          
+          // Determinar si estamos viendo nuestro perfil o el de otro usuario
+          isCurrentUserProfile = !profileUserId || profileUserId === user.uid;
+          profileUserId = isCurrentUserProfile ? user.uid : profileUserId;
+          
+          // Cargar datos del perfil
+          loadUserData();
+          loadUserPosts();
+          loadFollowStats();
+          
+          // Configurar el botón de seguir si no es nuestro perfil
+          if (!isCurrentUserProfile) {
+            setupFollowButton();
+          } else {
+            // Ocultar botón de seguir si es nuestro propio perfil
+            document.getElementById('followButton').style.display = 'none';
+          }
+        } else {
+          window.location.href = 'login.html';
+        }
+      });
+      
+      // Configurar el formulario de publicación
+      document.getElementById('postForm').addEventListener('submit', handlePostSubmit);
+      
+      // Configurar el toggle de privacidad
+      document.getElementById('privacyToggle').addEventListener('change', togglePrivacy);
+      
+      // Configurar vista previa de imagen en el modal de foto
+      document.getElementById('photoInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            document.getElementById('photoPreview').src = event.target.result;
+            document.getElementById('photoPreview').style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+      
+      // Configurar vista previa de imagen/video en el modal de publicación
+      document.getElementById('postMedia').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const isVideo = file.type.includes('video');
+          
+          // Actualizar el label del input
+          if (isVideo) {
+            document.getElementById('mediaInputIcon').className = 'fas fa-video';
+            document.getElementById('mediaInputText').textContent = 'Video seleccionado';
+            document.getElementById('mediaLabel').textContent = 'Video:';
+          } else {
+            document.getElementById('mediaInputIcon').className = 'fas fa-image';
+            document.getElementById('mediaInputText').textContent = 'Imagen seleccionada';
+            document.getElementById('mediaLabel').textContent = 'Imagen:';
+          }
+          
+          const previewElement = isVideo ? 
+            document.getElementById('videoPreview') : 
+            document.getElementById('imagePreview');
+            
+          const otherElement = isVideo ? 
+            document.getElementById('imagePreview') : 
+            document.getElementById('videoPreview');
+            
+          otherElement.style.display = 'none';
+          
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            previewElement.src = event.target.result;
+            previewElement.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    });
+
+    // Cargar datos del usuario desde Firestore
+    async function loadUserData() {
+      try {
+        const userDoc = await db.collection('users').doc(profileUserId).get();
+        
+        if (userDoc.exists) {
+          userData = userDoc.data();
+          
+          // Mostrar datos del usuario
+          document.getElementById('userName').textContent = userData.displayName || 'Usuario';
+          document.getElementById('userEmail').textContent = userData.email || 'Correo no disponible';
+          
+          // Foto de perfil
+          if (userData.photoURL) {
+            document.getElementById('profilePicture').src = userData.photoURL;
+          }
+          
+          // Configurar privacidad (solo si es nuestro perfil)
+          if (isCurrentUserProfile) {
+            const isPrivate = userData.privacy === 'private';
+            document.getElementById('privacyToggle').checked = isPrivate;
+            document.getElementById('privacyLabel').textContent = isPrivate ? 'Perfil Privado' : 'Perfil Público';
+          } else {
+            // Ocultar controles de edición si no es nuestro perfil
+            document.getElementById('privacyContainer').style.display = 'none';
+            document.querySelectorAll('.edit-name, .edit-picture').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('[onclick*="openPostModal"]').forEach(el => el.style.display = 'none');
+          }
+        } else {
+          showNotification('El perfil no existe', 'error');
+          window.location.href = 'index.html';
+        }
+      } catch (error) {
+        console.error("Error al cargar datos del usuario:", error);
+        showNotification('Error al cargar datos del perfil', 'error');
+      }
+    }
+
+    // Cargar publicaciones del usuario
+    async function loadUserPosts() {
+      try {
+        // Cargar gallos
+        const gallosQuery = db.collection('PublicGallo')
+          .where('userId', '==', profileUserId)
+          .orderBy('timestamp', 'desc');
+        
+        const gallosSnapshot = await gallosQuery.get();
+        displayPosts(gallosSnapshot, 'gallosGrid', 'gallos');
+        
+        // Cargar entrenamientos
+        const entrenamientosQuery = db.collection('PublicEntrenamiento')
+          .where('userId', '==', profileUserId)
+          .orderBy('timestamp', 'desc');
+        
+        const entrenamientosSnapshot = await entrenamientosQuery.get();
+        displayPosts(entrenamientosSnapshot, 'entrenamientosGrid', 'entrenamientos');
+        
+        // Cargar peleas
+        const peleasQuery = db.collection('PublicPelea')
+          .where('userId', '==', profileUserId)
+          .orderBy('timestamp', 'desc');
+        
+        const peleasSnapshot = await peleasQuery.get();
+        displayPosts(peleasSnapshot, 'peleasGrid', 'peleas');
+        
+        // Actualizar contador de publicaciones
+        const totalPosts = gallosSnapshot.size + entrenamientosSnapshot.size + peleasSnapshot.size;
+        document.getElementById('postCount').textContent = totalPosts;
+      } catch (error) {
+        console.error("Error al cargar publicaciones:", error);
+        showNotification('Error al cargar publicaciones', 'error');
+      }
+    }
+
+    // Mostrar publicaciones en la cuadrícula
+    function displayPosts(snapshot, gridId, type) {
+      const grid = document.getElementById(gridId);
+      grid.innerHTML = '';
+      
+      if (snapshot.empty) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-box-open"></i>
+            <p>No hay ${type} registrados</p>
+          </div>
+        `;
+        return;
+      }
+      
+      snapshot.forEach(doc => {
+        const post = doc.data();
+        const postDate = post.timestamp.toDate().toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+        
+        // Determinar el icono según el tipo
+        let iconClass = 'fa-image';
+        if (type === 'entrenamientos' || type === 'peleas') {
+          iconClass = 'fa-video';
+        }
+        
+        grid.innerHTML += `
+          <div class="content-card" onclick="viewPostDetail('${type}', '${doc.id}')">
+            <div class="content-media-container">
+              ${type === 'gallos' ? 
+                `<img src="${post.mediaUrl}" alt="${post.title}" class="content-media">` : 
+                `<i class="fas ${iconClass} media-icon"></i>`
+              }
+            </div>
+            <div class="content-info">
+              <div class="content-title">${post.title}</div>
+              <div class="content-description">${post.description}</div>
+              <div class="content-meta">
+                <span>${postDate}</span>
+                <span><i class="fas fa-heart"></i> ${post.likes || 0}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // Cargar estadísticas de seguidores/seguidos
+    async function loadFollowStats() {
+      try {
+        // Contar seguidores
+        const followersSnapshot = await db.collection('followers')
+          .doc(profileUserId)
+          .collection('userFollowers')
+          .get();
+        
+        document.getElementById('followerCount').textContent = followersSnapshot.size;
+        
+        // Contar seguidos
+        const followingSnapshot = await db.collection('followers')
+          .doc(profileUserId)
+          .collection('userFollowing')
+          .get();
+        
+        document.getElementById('followingCount').textContent = followingSnapshot.size;
+      } catch (error) {
+        console.error("Error al cargar estadísticas de seguimiento:", error);
+      }
+    }
+
+    // Configurar botón de seguir
+    async function setupFollowButton() {
+      const followButton = document.getElementById('followButton');
+      
+      // Verificar si ya seguimos a este usuario
+      const followDoc = await db.collection('followers')
+        .doc(profileUserId)
+        .collection('userFollowers')
+        .doc(currentUser.uid)
+        .get();
+      
+      if (followDoc.exists) {
+        // Ya lo seguimos
+        followButton.innerHTML = '<i class="fas fa-user-check"></i> Siguiendo';
+        followButton.classList.add('btn-following');
+        followButton.classList.remove('btn-follow');
+      } else {
+        // No lo seguimos
+        followButton.innerHTML = '<i class="fas fa-user-plus"></i> Seguir';
+        followButton.classList.add('btn-follow');
+        followButton.classList.remove('btn-following');
+      }
+      
+      // Configurar evento click
+      followButton.onclick = toggleFollow;
+    }
+
+    // Alternar seguir/dejar de seguir
+    async function toggleFollow() {
+      const followButton = document.getElementById('followButton');
+      
+      try {
+        if (followButton.classList.contains('btn-follow')) {
+          // Seguir al usuario
+          await db.collection('followers')
+            .doc(profileUserId)
+            .collection('userFollowers')
+            .doc(currentUser.uid)
+            .set({
+              userId: currentUser.uid,
+              timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          
+          // Agregar a nuestra lista de seguidos
+          await db.collection('followers')
+            .doc(currentUser.uid)
+            .collection('userFollowing')
+            .doc(profileUserId)
+            .set({
+              userId: profileUserId,
+              timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          
+          // Actualizar UI
+          followButton.innerHTML = '<i class="fas fa-user-check"></i> Siguiendo';
+          followButton.classList.add('btn-following');
+          followButton.classList.remove('btn-follow');
+          
+          // Actualizar contador
+          const currentCount = parseInt(document.getElementById('followerCount').textContent);
+          document.getElementById('followerCount').textContent = currentCount + 1;
+          
+          showNotification('Ahora sigues a este usuario', 'success');
+        } else {
+          // Dejar de seguir
+          await db.collection('followers')
+            .doc(profileUserId)
+            .collection('userFollowers')
+            .doc(currentUser.uid)
+            .delete();
+            
+          await db.collection('followers')
+            .doc(currentUser.uid)
+            .collection('userFollowing')
+            .doc(profileUserId)
+            .delete();
+          
+          // Actualizar UI
+          followButton.innerHTML = '<i class="fas fa-user-plus"></i> Seguir';
+          followButton.classList.add('btn-follow');
+          followButton.classList.remove('btn-following');
+          
+          // Actualizar contador
+          const currentCount = parseInt(document.getElementById('followerCount').textContent);
+          document.getElementById('followerCount').textContent = Math.max(0, currentCount - 1);
+          
+          showNotification('Has dejado de seguir a este usuario', 'success');
+        }
+      } catch (error) {
+        console.error("Error al actualizar seguimiento:", error);
+        showNotification('Error al actualizar seguimiento', 'error');
+      }
+    }
+
+    // Cambiar entre pestañas
+    function openTab(tabName) {
+      // Ocultar todas las pestañas
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Desactivar todos los botones
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Mostrar la pestaña seleccionada
+      document.getElementById(tabName).classList.add('active');
+      
+      // Activar el botón seleccionado
+      event.currentTarget.classList.add('active');
+      
+      currentTab = tabName;
+    }
+
+    // Abrir modal para editar nombre
+    function openEditNameModal() {
+      document.getElementById('newName').value = document.getElementById('userName').textContent;
+      document.getElementById('editNameModal').style.display = 'flex';
+    }
+
+    // Cerrar modal para editar nombre
+    function closeEditNameModal() {
+      document.getElementById('editNameModal').style.display = 'none';
+    }
+
+    // Guardar nuevo nombre de usuario
+    async function saveUserName() {
+      const newName = document.getElementById('newName').value.trim();
+      
+      if (!newName) {
+        showNotification('Por favor ingresa un nombre válido', 'error');
+        return;
+      }
+      
+      try {
+        // Actualizar en Authentication
+        await currentUser.updateProfile({
+          displayName: newName
+        });
+        
+        // Actualizar en Firestore
+        await db.collection('users').doc(currentUser.uid).set({
+          displayName: newName
+        }, { merge: true });
+        
+        // Actualizar en la interfaz
+        document.getElementById('userName').textContent = newName;
+        userData.displayName = newName;
+        
+        closeEditNameModal();
+        showNotification('Nombre actualizado correctamente', 'success');
+      } catch (error) {
+        console.error("Error al actualizar nombre:", error);
+        showNotification('Error al actualizar el nombre', 'error');
+      }
+    }
+
+    // Abrir modal para cambiar foto
+    function openPhotoModal() {
+      document.getElementById('photoModal').style.display = 'flex';
+    }
+
+    // Cerrar modal para cambiar foto
+    function closePhotoModal() {
+      document.getElementById('photoPreview').style.display = 'none';
+      document.getElementById('photoInput').value = '';
+      document.getElementById('photoModal').style.display = 'none';
+    }
+
+    // Subir nueva foto de perfil
+    async function uploadProfilePhoto() {
+      const fileInput = document.getElementById('photoInput');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        showNotification('Por favor selecciona una imagen', 'error');
+        return;
+      }
+      
+      try {
+        // Mostrar carga
+        showNotification('Subiendo imagen...', 'success');
+        
+        // Subir imagen a Storage
+        const storageRef = storage.ref(`profile_pictures/${currentUser.uid}`);
+        const uploadTask = storageRef.put(file);
+        
+        // Esperar a que se complete la subida
+        await uploadTask;
+        
+        // Obtener URL de descarga
+        const downloadURL = await storageRef.getDownloadURL();
+        
+        // Actualizar en Authentication
+        await currentUser.updateProfile({
+          photoURL: downloadURL
+        });
+        
+        // Actualizar en Firestore
+        await db.collection('users').doc(currentUser.uid).set({
+          photoURL: downloadURL
+        }, { merge: true });
+        
+        // Actualizar en la interfaz
+        document.getElementById('profilePicture').src = downloadURL;
+        userData.photoURL = downloadURL;
+        
+        closePhotoModal();
+        showNotification('Foto de perfil actualizada correctamente', 'success');
+      } catch (error) {
+        console.error("Error al actualizar foto de perfil:", error);
+        showNotification('Error al actualizar la foto de perfil', 'error');
+      }
+    }
+
+    // Cambiar privacidad del perfil
+    async function togglePrivacy() {
+      const isPrivate = document.getElementById('privacyToggle').checked;
+      
+      try {
+        await db.collection('users').doc(currentUser.uid).set({
+          privacy: isPrivate ? 'private' : 'public'
+        }, { merge: true });
+        
+        document.getElementById('privacyLabel').textContent = isPrivate ? 'Perfil Privado' : 'Perfil Público';
+        showNotification('Configuración de privacidad actualizada', 'success');
+      } catch (error) {
+        console.error("Error al actualizar privacidad:", error);
+        showNotification('Error al actualizar la privacidad', 'error');
+      }
+    }
+
+    // Abrir modal para nueva publicación
+    function openPostModal(type) {
+      document.getElementById('postType').value = type;
+      
+      // Resetear vista previa
+      document.getElementById('imagePreview').style.display = 'none';
+      document.getElementById('videoPreview').style.display = 'none';
+      document.getElementById('postMedia').value = '';
+      
+      // Configurar el modal según el tipo de publicación
+      switch(type) {
+        case 'gallos':
+          document.getElementById('postModalTitle').textContent = 'Nuevo Gallo';
+          document.getElementById('mediaInputIcon').className = 'fas fa-image';
+          document.getElementById('mediaInputText').textContent = 'Seleccionar imagen';
+          document.getElementById('mediaLabel').textContent = 'Imagen del gallo:';
+          document.getElementById('postMedia').accept = 'image/*';
+          break;
+        case 'entrenamientos':
+          document.getElementById('postModalTitle').textContent = 'Nuevo Entrenamiento';
+          document.getElementById('mediaInputIcon').className = 'fas fa-video';
+          document.getElementById('mediaInputText').textContent = 'Seleccionar video';
+          document.getElementById('mediaLabel').textContent = 'Video del entrenamiento:';
+          document.getElementById('postMedia').accept = 'video/*';
+          break;
+        case 'peleas':
+          document.getElementById('postModalTitle').textContent = 'Nueva Pelea';
+          document.getElementById('mediaInputIcon').className = 'fas fa-video';
+          document.getElementById('mediaInputText').textContent = 'Seleccionar video';
+          document.getElementById('mediaLabel').textContent = 'Video de la pelea:';
+          document.getElementById('postMedia').accept = 'video/*';
+          break;
+      }
+      
+      document.getElementById('postModal').style.display = 'flex';
+    }
+
+    // Cerrar modal de publicación
+    function closePostModal() {
+      document.getElementById('postForm').reset();
+      document.getElementById('imagePreview').style.display = 'none';
+      document.getElementById('videoPreview').style.display = 'none';
+      document.getElementById('postModal').style.display = 'none';
+    }
+
+    // Manejar envío de nueva publicación
+    async function handlePostSubmit(event) {
+      event.preventDefault();
+      
+      const type = document.getElementById('postType').value;
+      const title = document.getElementById('postTitle').value.trim();
+      const description = document.getElementById('postDescription').value.trim();
+      const mediaFile = document.getElementById('postMedia').files[0];
+      
+      if (!title || !description || !mediaFile) {
+        showNotification('Por favor completa todos los campos', 'error');
+        return;
+      }
+      
+      try {
+        showNotification('Publicando...', 'success');
+        
+        // Determinar la colección según el tipo
+        let collectionName = '';
+        switch(type) {
+          case 'gallos': collectionName = 'PublicGallo'; break;
+          case 'entrenamientos': collectionName = 'PublicEntrenamiento'; break;
+          case 'peleas': collectionName = 'PublicPelea'; break;
+        }
+        
+        // Subir el archivo multimedia a Storage
+        const fileExtension = mediaFile.name.split('.').pop();
+        const storageRef = storage.ref(`${type}/${currentUser.uid}_${Date.now()}.${fileExtension}`);
+        const uploadTask = storageRef.put(mediaFile);
+        
+        // Esperar a que se complete la subida
+        await uploadTask;
+        
+        // Obtener URL de descarga
+        const mediaUrl = await storageRef.getDownloadURL();
+        
+        // Crear el documento en Firestore
+        await db.collection(collectionName).add({
+          userId: currentUser.uid,
+          userDisplayName: userData.displayName || currentUser.displayName,
+          userPhotoURL: userData.photoURL || currentUser.photoURL,
+          type: type,
+          title: title,
+          description: description,
+          mediaUrl: mediaUrl,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          likes: 0,
+          comments: 0,
+          privacy: userData.privacy || 'public'
+        });
+        
+        // Cerrar el modal y recargar las publicaciones
+        closePostModal();
+        loadUserPosts();
+        showNotification('Publicación creada exitosamente', 'success');
+      } catch (error) {
+        console.error("Error al crear publicación:", error);
+        showNotification('Error al crear la publicación', 'error');
+      }
+    }
+
+    // Ver detalle de una publicación
+    function viewPostDetail(type, postId) {
+      window.location.href = `detalle.html?type=${type}&id=${postId}`;
+    }
+
+    // Compartir perfil
+    function shareProfile() {
+      if (navigator.share) {
+        navigator.share({
+          title: `Perfil de ${userData.displayName || 'Usuario'}`,
+          text: `Mira el perfil de ${userData.displayName || 'Usuario'} en GalloTracker`,
+          url: window.location.href
+        }).catch(err => {
+          console.log('Error al compartir:', err);
+          fallbackShare();
+        });
+      } else {
+        fallbackShare();
+      }
+    }
+
+    function fallbackShare() {
+      const shareUrl = window.location.href;
+      const tempInput = document.createElement('input');
+      tempInput.value = shareUrl;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      showNotification('Enlace copiado al portapapeles', 'success');
+    }
+
+    // Mostrar notificación
+    function showNotification(message, type) {
+      const notification = document.getElementById('notification');
+      const notificationText = document.getElementById('notificationText');
+      
+      notificationText.textContent = message;
+      notification.className = `notification ${type} show`;
+      
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
