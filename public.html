@@ -281,7 +281,7 @@
     }
 
     /* Estilos para videos */
-    .video-wrapper {
+    .video-container {
       position: relative;
       width: 100%;
       background: #000;
@@ -289,96 +289,73 @@
       overflow: hidden;
     }
 
-    /* Video normal (16:9) */
-    .video-wrapper.normal {
-      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    /* Video normal (horizontal) */
+    .video-container.normal video {
+      width: 100%;
+      height: auto;
+      max-height: 500px;
+      display: block;
     }
 
-    /* Video short (9:16) */
-    .video-wrapper.short {
-      padding-bottom: 177.78%; /* 9:16 aspect ratio */
+    /* Video short (vertical) */
+    .video-container.short video {
+      width: auto;
+      height: 400px;
+      max-width: 100%;
+      display: block;
+      margin: 0 auto;
     }
 
-    .video-wrapper video {
+    .video-overlay {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .video-controls {
-      position: absolute;
-      bottom: 0;
-      left: 0;
       right: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-      padding: 10px;
+      bottom: 0;
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 10px;
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
       opacity: 0;
       transition: opacity 0.3s ease;
     }
 
-    .video-wrapper:hover .video-controls {
+    .video-container:hover .video-overlay {
       opacity: 1;
     }
 
-    .play-btn {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 24px;
-      cursor: pointer;
-      margin-right: 10px;
-    }
-
-    .progress-bar {
-      flex: 1;
-      height: 4px;
-      background: rgba(255,255,255,0.3);
-      border-radius: 2px;
-      margin-right: 10px;
-      position: relative;
-    }
-
-    .progress {
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100%;
-      background: var(--primary-color);
-      border-radius: 2px;
-    }
-
-    .volume-control {
+    .video-stats {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      margin-right: 10px;
+      color: white;
+      font-size: 14px;
     }
 
-    .volume-btn {
+    .video-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .video-control-btn {
       background: none;
       border: none;
       color: white;
-      font-size: 16px;
+      font-size: 20px;
       cursor: pointer;
-    }
-
-    .volume-slider {
-      width: 60px;
-      height: 4px;
-      background: rgba(255,255,255,0.3);
-      border-radius: 2px;
-      margin-left: 5px;
     }
 
     .fullscreen-btn {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
       background: none;
       border: none;
       color: white;
-      font-size: 16px;
+      font-size: 20px;
       cursor: pointer;
     }
 
@@ -740,6 +717,14 @@
         max-width: 800px;
         margin: 0 auto;
       }
+
+      .video-container.normal video {
+        max-height: 600px;
+      }
+
+      .video-container.short video {
+        height: 500px;
+      }
     }
 
     @media (min-width: 992px) {
@@ -975,45 +960,50 @@
     // Configurar controles de video
     function setupVideoControls() {
       document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('post-video') || e.target.closest('.video-wrapper')) {
-          const videoWrapper = e.target.classList.contains('post-video') ? 
-            e.target.parentElement : e.target.closest('.video-wrapper');
-          toggleVideoPlay(videoWrapper);
+        // Reproducir/pausar al hacer clic en el video
+        if (e.target.tagName === 'VIDEO') {
+          const video = e.target;
+          if (video.paused) {
+            video.play();
+          } else {
+            video.pause();
+          }
         }
         
-        if (e.target.classList.contains('play-btn')) {
-          const videoWrapper = e.target.closest('.video-wrapper');
-          toggleVideoPlay(videoWrapper);
-        }
-        
-        if (e.target.classList.contains('fullscreen-btn')) {
-          const videoWrapper = e.target.closest('.video-wrapper');
-          toggleFullscreen(videoWrapper);
+        // Botón de pantalla completa
+        if (e.target.classList.contains('fullscreen-btn') || 
+            e.target.closest('.fullscreen-btn')) {
+          const videoContainer = e.target.closest('.video-container');
+          toggleFullscreen(videoContainer);
         }
       });
     }
 
-    // Alternar reproducción de video
-    function toggleVideoPlay(videoWrapper) {
-      const video = videoWrapper.querySelector('video');
-      if (video.paused) {
-        video.play();
-        videoWrapper.querySelector('.play-btn i').className = 'fas fa-pause';
-      } else {
-        video.pause();
-        videoWrapper.querySelector('.play-btn i').className = 'fas fa-play';
-      }
-    }
-
     // Alternar pantalla completa
-    function toggleFullscreen(videoWrapper) {
+    function toggleFullscreen(element) {
       if (!document.fullscreenElement) {
-        videoWrapper.requestFullscreen().catch(err => {
-          console.error(`Error al intentar entrar en pantalla completa: ${err.message}`);
+        element.requestFullscreen().catch(err => {
+          console.error(`Error al entrar en pantalla completa: ${err.message}`);
         });
       } else {
         document.exitFullscreen();
       }
+    }
+
+    // Determinar si un video es vertical (short) u horizontal
+    function isVideoShort(videoUrl) {
+      return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.src = videoUrl + '#t=0.1';
+        
+        video.onloadedmetadata = () => {
+          resolve(video.videoHeight > video.videoWidth);
+        };
+        
+        video.onerror = () => {
+          resolve(false); // Por defecto asumimos que no es short si hay error
+        };
+      });
     }
 
     // Cargar todas las publicaciones
@@ -1054,7 +1044,7 @@
     }
 
     // Mostrar publicaciones en el contenedor
-    function displayPosts(posts) {
+    async function displayPosts(posts) {
       const container = document.getElementById('postsContainer');
       
       if (posts.length === 0) {
@@ -1069,7 +1059,8 @@
       
       container.innerHTML = '';
       
-      posts.forEach(post => {
+      // Procesar cada publicación
+      for (const post of posts) {
         // Formatear fecha
         let postDate = 'Fecha no disponible';
         if (post.timestamp && post.timestamp.toDate) {
@@ -1098,19 +1089,25 @@
           `;
         } else {
           // Determinar si es un video short (vertical) o normal (horizontal)
-          const isShortVideo = post.isShort || false;
+          const isShort = await isVideoShort(post.mediaUrl);
+          
           mediaContent = `
-            <div class="video-wrapper ${isShortVideo ? 'short' : 'normal'}">
-              <video class="post-video" preload="metadata">
-                <source src="${post.mediaUrl}#t=0.1" type="video/mp4">
-                Tu navegador no soporta videos HTML5.
-              </video>
-              <div class="video-controls">
-                <button class="play-btn"><i class="fas fa-play"></i></button>
-                <div class="progress-bar"><div class="progress"></div></div>
-                <div class="volume-control">
-                  <button class="volume-btn"><i class="fas fa-volume-up"></i></button>
-                  <input type="range" class="volume-slider" min="0" max="1" step="0.1" value="1">
+            <div class="post-media-container">
+              <div class="video-container ${isShort ? 'short' : 'normal'}">
+                <video controls>
+                  <source src="${post.mediaUrl}" type="video/mp4">
+                  Tu navegador no soporta videos HTML5.
+                </video>
+                <div class="video-overlay">
+                  <div class="video-stats">
+                    <span><i class="fas fa-heart"></i> ${post.likes || 0}</span>
+                    <span><i class="fas fa-comment"></i> ${post.comments || 0}</span>
+                  </div>
+                  <div class="video-controls">
+                    <button class="video-control-btn"><i class="fas fa-heart"></i></button>
+                    <button class="video-control-btn"><i class="fas fa-comment"></i></button>
+                    <button class="video-control-btn"><i class="fas fa-share"></i></button>
+                  </div>
                 </div>
                 <button class="fullscreen-btn"><i class="fas fa-expand"></i></button>
               </div>
@@ -1174,7 +1171,7 @@
         
         // Configurar estado del like
         checkLikeStatus(post.type, post.id);
-      });
+      }
     }
 
     // Expandir imagen
@@ -1286,31 +1283,32 @@
     // Cargar publicaciones del perfil (CORREGIDO)
     async function loadProfilePosts(userId) {
       try {
+        // Obtener todas las publicaciones del usuario
         const [gallosSnapshot, entrenamientosSnapshot, peleasSnapshot] = await Promise.all([
-          db.collection('PublicGallo').where('userId', '==', userId).orderBy('timestamp', 'desc').get(),
-          db.collection('PublicEntrenamiento').where('userId', '==', userId).orderBy('timestamp', 'desc').get(),
-          db.collection('PublicPelea').where('userId', '==', userId).orderBy('timestamp', 'desc').get()
+          db.collection('PublicGallo').where('userId', '==', userId).get(),
+          db.collection('PublicEntrenamiento').where('userId', '==', userId).get(),
+          db.collection('PublicPelea').where('userId', '==', userId).get()
         ]);
         
         const postsGrid = document.getElementById('profilePostsGrid');
         postsGrid.innerHTML = '';
         
         // Combinar todas las publicaciones
-        const allPosts = [];
+        const userPosts = [];
         
         gallosSnapshot.forEach(doc => {
-          allPosts.push({...doc.data(), id: doc.id, type: 'gallos'});
+          userPosts.push({...doc.data(), id: doc.id, type: 'gallos'});
         });
         
         entrenamientosSnapshot.forEach(doc => {
-          allPosts.push({...doc.data(), id: doc.id, type: 'entrenamientos'});
+          userPosts.push({...doc.data(), id: doc.id, type: 'entrenamientos'});
         });
         
         peleasSnapshot.forEach(doc => {
-          allPosts.push({...doc.data(), id: doc.id, type: 'peleas'});
+          userPosts.push({...doc.data(), id: doc.id, type: 'peleas'});
         });
         
-        if (allPosts.length === 0) {
+        if (userPosts.length === 0) {
           postsGrid.innerHTML = `
             <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-gray);">
               <i class="fas fa-box-open" style="font-size: 30px;"></i>
@@ -1321,14 +1319,14 @@
         }
         
         // Ordenar por fecha (más reciente primero)
-        allPosts.sort((a, b) => {
+        userPosts.sort((a, b) => {
           const dateA = a.timestamp?.toDate() || new Date(0);
           const dateB = b.timestamp?.toDate() || new Date(0);
           return dateB - dateA;
         });
         
-        // Mostrar publicaciones
-        allPosts.forEach(post => {
+        // Mostrar publicaciones en el grid
+        userPosts.forEach(post => {
           if (post.type === 'gallos') {
             postsGrid.innerHTML += `
               <div class="profile-post" onclick="viewPostDetail('${post.type}', '${post.id}')">
