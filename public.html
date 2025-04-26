@@ -1137,1362 +1137,1567 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
-  <script>
-    // Configuración de Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyDLi-egzQlgbKW8XV_qIhU6313Gd8gocCg",
-      authDomain: "inventario-35d6b.firebaseapp.com",
-      databaseURL: "https://inventario-35d6b-default-rtdb.firebaseio.com",
-      projectId: "inventario-35d6b",
-      storageBucket: "inventario-35d6b.appspot.com",
-      messagingSenderId: "266100399659",
-      appId: "1:266100399659:web:92358d28cbd803c8a7d46e"
-    };
+  
+          <script>
+          // Configuración de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyDLi-egzQlgbKW8XV_qIhU6313Gd8gocCg",
+  authDomain: "inventario-35d6b.firebaseapp.com",
+  databaseURL: "https://inventario-35d6b-default-rtdb.firebaseio.com",
+  projectId: "inventario-35d6b",
+  storageBucket: "inventario-35d6b.appspot.com",
+  messagingSenderId: "266100399659",
+  appId: "1:266100399659:web:92358d28cbd803c8a7d46e"
+};
 
-    // Inicializar Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const storage = firebase.storage();
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
 
-    // Variables globales
-    let currentUser = null;
-    let allPosts = [];
-    let currentFilter = 'all';
-    let currentProfileUserId = null;
-    let currentProfileUserData = null;
-    let currentVideo = null;
-    let fullscreenVideo = null;
-    let startY = 0;
-    let isSwiping = false;
-    let currentPostIndex = 0;
-    let videoPosts = [];
-    let currentModalPost = null;
+// Variables globales
+let currentUser = null;
+let allPosts = [];
+let currentFilter = 'all';
+let currentProfileUserId = null;
+let currentProfileUserData = null;
+let currentVideo = null;
+let fullscreenVideo = null;
+let startY = 0;
+let isSwiping = false;
+let currentPostIndex = 0;
+let videoPosts = [];
+let currentModalPost = null;
+let likedPosts = new Set();
+let userCache = {};
 
-    // Inicializar la aplicación
-    document.addEventListener('DOMContentLoaded', () => {
-      auth.onAuthStateChanged(user => {
-        if (user) {
-          currentUser = user;
-          loadAllPosts();
-          
-          // Configurar eventos de video
-          setupVideoControls();
-          setupFullscreenEvents();
-        } else {
-          window.location.href = 'login.html';
-        }
-      });
-    });
-
-    // Configurar eventos para pantalla completa
-    function setupFullscreenEvents() {
-      document.addEventListener('fullscreenchange', handleFullscreenChange);
-      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-      document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-    }
-
-    // Manejar cambios en pantalla completa
-    function handleFullscreenChange() {
-      const isFullscreen = document.fullscreenElement || 
-                          document.webkitFullscreenElement || 
-                          document.mozFullScreenElement || 
-                          document.msFullscreenElement;
+// Inicializar la aplicación
+document.addEventListener('DOMContentLoaded', () => {
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      loadAllPosts();
+      loadLikedPosts();
       
-      if (isFullscreen) {
-        // Entramos en pantalla completa
-        fullscreenVideo = document.fullscreenElement || 
-                         document.webkitFullscreenElement || 
-                         document.mozFullScreenElement || 
-                         document.msFullscreenElement;
-        
-        // Configurar eventos de deslizamiento
-        setupSwipeEvents(fullscreenVideo);
-        
-        // Mostrar indicador de deslizamiento
-        showSwipeIndicator();
-      } else {
-        // Salimos de pantalla completa
-        if (fullscreenVideo) {
-          fullscreenVideo.removeEventListener('touchstart', handleTouchStart);
-          fullscreenVideo.removeEventListener('touchmove', handleTouchMove);
-          fullscreenVideo.removeEventListener('touchend', handleTouchEnd);
-          fullscreenVideo = null;
-        }
-      }
+      // Configurar eventos de video
+      setupVideoControls();
+      setupFullscreenEvents();
+    } else {
+      window.location.href = 'login.html';
     }
+  });
+});
 
-    // Mostrar indicador de deslizamiento
-    function showSwipeIndicator() {
-      const indicator = document.getElementById('swipeIndicator');
-      indicator.style.display = 'block';
-      
-      setTimeout(() => {
-        indicator.style.opacity = '1';
-      }, 100);
-      
-      setTimeout(() => {
-        indicator.style.opacity = '0';
-        setTimeout(() => {
-          indicator.style.display = 'none';
-        }, 300);
-      }, 3000);
-    }
+// Cargar posts que el usuario ha dado like
+async function loadLikedPosts() {
+  try {
+    // Limpiar el set de likes
+    likedPosts = new Set();
+    
+    // Obtener likes de todas las colecciones
+    const [gallosLikes, entrenamientosLikes, peleasLikes] = await Promise.all([
+      db.collection('PublicGallo').where('likes', 'array-contains', currentUser.uid).get(),
+      db.collection('PublicEntrenamiento').where('likes', 'array-contains', currentUser.uid).get(),
+      db.collection('PublicPelea').where('likes', 'array-contains', currentUser.uid).get()
+    ]);
+    
+    // Agregar IDs de posts con like
+    gallosLikes.forEach(doc => likedPosts.add(`gallos_${doc.id}`));
+    entrenamientosLikes.forEach(doc => likedPosts.add(`entrenamientos_${doc.id}`));
+    peleasLikes.forEach(doc => likedPosts.add(`peleas_${doc.id}`));
+    
+  } catch (error) {
+    console.error("Error al cargar posts con like:", error);
+  }
+}
 
+// Configurar eventos para pantalla completa
+function setupFullscreenEvents() {
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+  document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+  document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+}
+
+// Manejar cambios en pantalla completa
+function handleFullscreenChange() {
+  const isFullscreen = document.fullscreenElement || 
+                      document.webkitFullscreenElement || 
+                      document.mozFullScreenElement || 
+                      document.msFullscreenElement;
+  
+  if (isFullscreen) {
+    // Entramos en pantalla completa
+    fullscreenVideo = document.fullscreenElement || 
+                     document.webkitFullscreenElement || 
+                     document.mozFullScreenElement || 
+                     document.msFullscreenElement;
+    
     // Configurar eventos de deslizamiento
-    function setupSwipeEvents(element) {
-      element.addEventListener('touchstart', handleTouchStart, { passive: false });
-      element.addEventListener('touchmove', handleTouchMove, { passive: false });
-      element.addEventListener('touchend', handleTouchEnd, { passive: true });
+    setupSwipeEvents(fullscreenVideo);
+    
+    // Mostrar indicador de deslizamiento
+    showSwipeIndicator();
+  } else {
+    // Salimos de pantalla completa
+    if (fullscreenVideo) {
+      fullscreenVideo.removeEventListener('touchstart', handleTouchStart);
+      fullscreenVideo.removeEventListener('touchmove', handleTouchMove);
+      fullscreenVideo.removeEventListener('touchend', handleTouchEnd);
+      fullscreenVideo = null;
     }
+  }
+}
 
-    // Manejar inicio de toque
-    function handleTouchStart(e) {
-      startY = e.touches[0].clientY;
-      isSwiping = false;
+// Mostrar indicador de deslizamiento
+function showSwipeIndicator() {
+  const indicator = document.getElementById('swipeIndicator');
+  indicator.style.display = 'block';
+  
+  setTimeout(() => {
+    indicator.style.opacity = '1';
+  }, 100);
+  
+  setTimeout(() => {
+    indicator.style.opacity = '0';
+    setTimeout(() => {
+      indicator.style.display = 'none';
+    }, 300);
+  }, 3000);
+}
+
+// Configurar eventos de deslizamiento
+function setupSwipeEvents(element) {
+  element.addEventListener('touchstart', handleTouchStart, { passive: false });
+  element.addEventListener('touchmove', handleTouchMove, { passive: false });
+  element.addEventListener('touchend', handleTouchEnd, { passive: true });
+}
+
+// Manejar inicio de toque
+function handleTouchStart(e) {
+  startY = e.touches[0].clientY;
+  isSwiping = false;
+}
+
+// Manejar movimiento de toque
+function handleTouchMove(e) {
+  if (!fullscreenVideo) return;
+  
+  const currentY = e.touches[0].clientY;
+  const diffY = startY - currentY;
+  
+  if (Math.abs(diffY) > 10) {
+    isSwiping = true;
+    e.preventDefault();
+  }
+}
+
+// Manejar fin de toque
+function handleTouchEnd(e) {
+  if (!fullscreenVideo || !isSwiping) return;
+  
+  const endY = e.changedTouches[0].clientY;
+  const diffY = startY - endY;
+  
+  if (Math.abs(diffY) > 50) { // Umbral mínimo para considerar un deslizamiento
+    if (diffY > 0) {
+      // Deslizamiento hacia arriba - siguiente video
+      navigateVideo('next');
+    } else {
+      // Deslizamiento hacia abajo - video anterior
+      navigateVideo('prev');
     }
+  }
+  
+  isSwiping = false;
+}
 
-    // Manejar movimiento de toque
-    function handleTouchMove(e) {
-      if (!fullscreenVideo) return;
-      
-      const currentY = e.touches[0].clientY;
-      const diffY = startY - currentY;
-      
-      if (Math.abs(diffY) > 10) {
-        isSwiping = true;
-        e.preventDefault();
-      }
+// Navegar entre videos en pantalla completa
+function navigateVideo(direction) {
+  if (!videoPosts.length) return;
+  
+  const spinner = document.getElementById('loadingSpinner');
+  spinner.style.display = 'block';
+  
+  // Encontrar el índice del video actual
+  const currentVideoSrc = fullscreenVideo.querySelector('video').src.split('?')[0];
+  currentPostIndex = videoPosts.findIndex(post => post.mediaUrl === currentVideoSrc);
+  
+  if (direction === 'next') {
+    currentPostIndex = (currentPostIndex + 1) % videoPosts.length;
+  } else {
+    currentPostIndex = (currentPostIndex - 1 + videoPosts.length) % videoPosts.length;
+  }
+  
+  // Cargar el nuevo video
+  const nextPost = videoPosts[currentPostIndex];
+  const videoContainer = fullscreenVideo;
+  
+  // Reemplazar el video
+  videoContainer.innerHTML = `
+    <video autoplay controls>
+      <source src="${nextPost.mediaUrl}" type="video/mp4">
+      Tu navegador no soporta videos HTML5.
+    </video>
+  `;
+  
+  const video = videoContainer.querySelector('video');
+  video.addEventListener('loadeddata', () => {
+    spinner.style.display = 'none';
+    
+    // Asegurarse de que el video sigue en pantalla completa
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && 
+        !document.mozFullScreenElement && !document.msFullscreenElement) {
+      videoContainer.requestFullscreen().catch(err => {
+        console.error('Error al mantener pantalla completa:', err);
+      });
     }
+  });
+  
+  video.addEventListener('error', () => {
+    spinner.style.display = 'none';
+    showNotification('Error al cargar el video', 'error');
+  });
+}
 
-    // Manejar fin de toque
-    function handleTouchEnd(e) {
-      if (!fullscreenVideo || !isSwiping) return;
-      
-      const endY = e.changedTouches[0].clientY;
-      const diffY = startY - endY;
-      
-      if (Math.abs(diffY) > 50) { // Umbral mínimo para considerar un deslizamiento
-        if (diffY > 0) {
-          // Deslizamiento hacia arriba - siguiente video
-          navigateVideo('next');
-        } else {
-          // Deslizamiento hacia abajo - video anterior
-          navigateVideo('prev');
-        }
-      }
-      
-      isSwiping = false;
+// Alternar búsqueda
+function toggleSearch() {
+  const searchInput = document.querySelector('.search-input');
+  const searchResults = document.getElementById('searchResults');
+  
+  searchInput.classList.toggle('active');
+  searchResults.classList.remove('active');
+  
+  if (searchInput.classList.contains('active')) {
+    searchInput.focus();
+  }
+}
+
+// Buscar usuarios con filtrado en tiempo real
+async function searchUsers(query) {
+  const searchResults = document.getElementById('searchResults');
+  
+  if (query.length < 2) {
+    searchResults.innerHTML = '';
+    searchResults.classList.remove('active');
+    return;
+  }
+  
+  try {
+    // Primero buscar en caché
+    const cachedResults = Object.values(userCache).filter(user => 
+      user.displayName.toLowerCase().includes(query.toLowerCase()) || 
+      user.email.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    if (cachedResults.length > 0) {
+      displaySearchResults(cachedResults, searchResults);
+      return;
     }
+    
+    // Si no hay resultados en caché, buscar en Firestore
+    const usersSnapshot = await db.collection('users')
+      .where('keywords', 'array-contains', query.toLowerCase())
+      .limit(10)
+      .get();
+    
+    if (usersSnapshot.empty) {
+      searchResults.innerHTML = '<div class="search-result-item">No se encontraron usuarios</div>';
+      searchResults.classList.add('active');
+      return;
+    }
+    
+    const usersData = [];
+    usersSnapshot.forEach(doc => {
+      const user = doc.data();
+      user.id = doc.id;
+      usersData.push(user);
+      // Almacenar en caché
+      userCache[doc.id] = user;
+    });
+    
+    displaySearchResults(usersData, searchResults);
+    
+  } catch (error) {
+    console.error("Error al buscar usuarios:", error);
+    searchResults.innerHTML = '<div class="search-result-item">Error al buscar usuarios</div>';
+    searchResults.classList.add('active');
+  }
+}
 
-    // Navegar entre videos en pantalla completa
-    function navigateVideo(direction) {
-      if (!videoPosts.length) return;
-      
-      const spinner = document.getElementById('loadingSpinner');
-      spinner.style.display = 'block';
-      
-      // Encontrar el índice del video actual
-      const currentVideoSrc = fullscreenVideo.querySelector('video').src.split('?')[0];
-      currentPostIndex = videoPosts.findIndex(post => post.mediaUrl === currentVideoSrc);
-      
-      if (direction === 'next') {
-        currentPostIndex = (currentPostIndex + 1) % videoPosts.length;
-      } else {
-        currentPostIndex = (currentPostIndex - 1 + videoPosts.length) % videoPosts.length;
-      }
-      
-      // Cargar el nuevo video
-      const nextPost = videoPosts[currentPostIndex];
-      const videoContainer = fullscreenVideo;
-      
-      // Reemplazar el video
-      videoContainer.innerHTML = `
-        <video autoplay controls>
-          <source src="${nextPost.mediaUrl}" type="video/mp4">
-          Tu navegador no soporta videos HTML5.
-        </video>
+// Mostrar resultados de búsqueda
+function displaySearchResults(users, searchResults) {
+  searchResults.innerHTML = '';
+  
+  users.forEach(user => {
+    if (user.id !== currentUser.uid) {
+      const item = document.createElement('div');
+      item.className = 'search-result-item';
+      item.innerHTML = `
+        <img src="${user.photoURL || 'img/default-profile.jpg'}" class="search-result-avatar">
+        <div>
+          <div>${user.displayName || 'Usuario'}</div>
+          <small>${user.email || ''}</small>
+        </div>
       `;
-      
-      const video = videoContainer.querySelector('video');
-      video.addEventListener('loadeddata', () => {
-        spinner.style.display = 'none';
-        
-        // Asegurarse de que el video sigue en pantalla completa
-        if (!document.fullscreenElement && !document.webkitFullscreenElement && 
-            !document.mozFullScreenElement && !document.msFullscreenElement) {
-          videoContainer.requestFullscreen().catch(err => {
-            console.error('Error al mantener pantalla completa:', err);
-          });
-        }
-      });
-      
-      video.addEventListener('error', () => {
-        spinner.style.display = 'none';
-        showNotification('Error al cargar el video', 'error');
-      });
+      item.onclick = () => viewUserProfile(user.id);
+      searchResults.appendChild(item);
     }
+  });
+  
+  searchResults.classList.add('active');
+}
 
-    // Alternar búsqueda
-    function toggleSearch() {
-      const searchInput = document.querySelector('.search-input');
-      const searchResults = document.getElementById('searchResults');
-      
-      searchInput.classList.toggle('active');
-      searchResults.classList.remove('active');
-      
-      if (searchInput.classList.contains('active')) {
-        searchInput.focus();
-      }
-    }
-
-    // Buscar usuarios
-    async function searchUsers(query) {
-      const searchResults = document.getElementById('searchResults');
-      
-      if (query.length < 2) {
-        searchResults.innerHTML = '';
-        searchResults.classList.remove('active');
-        return;
-      }
-      
-      try {
-        const usersSnapshot = await db.collection('users')
-          .where('displayName', '>=', query)
-          .where('displayName', '<=', query + '\uf8ff')
-          .limit(10)
-          .get();
-        
-        if (usersSnapshot.empty) {
-          searchResults.innerHTML = '<div class="search-result-item">No se encontraron usuarios</div>';
-          searchResults.classList.add('active');
-          return;
-        }
-        
-        searchResults.innerHTML = '';
-        usersSnapshot.forEach(doc => {
-          const user = doc.data();
-          if (doc.id !== currentUser.uid) {
-            const item = document.createElement('div');
-            item.className = 'search-result-item';
-            item.innerHTML = `
-              <img src="${user.photoURL || 'img/default-profile.jpg'}" class="search-result-avatar">
-              <span>${user.displayName || 'Usuario'}</span>
-            `;
-            item.onclick = () => viewUserProfile(doc.id);
-            searchResults.appendChild(item);
-          }
-        });
-        
-        searchResults.classList.add('active');
-      } catch (error) {
-        console.error("Error al buscar usuarios:", error);
-      }
-    }
-
-    // Configurar controles de video
-    function setupVideoControls() {
-      document.addEventListener('click', function(e) {
-        // Reproducir/pausar al hacer clic en el video
-        if (e.target.tagName === 'VIDEO') {
-          const video = e.target;
-          if (video.paused) {
-            video.play().catch(err => {
-              console.error("Error al reproducir video:", err);
-            });
-          } else {
-            video.pause();
-          }
-        }
-        
-        // Botón de pantalla completa (ahora se activa al tocar el video)
-        if (e.target.tagName === 'VIDEO' || e.target.classList.contains('video-container')) {
-          const videoContainer = e.target.tagName === 'VIDEO' ? 
-                               e.target.parentElement : e.target;
-          
-          // Solo videos verticales (shorts) tendrán navegación por gestos
-          if (videoContainer.classList.contains('short')) {
-            toggleFullscreen(videoContainer);
-          }
-        }
-      });
-    }
-
-    // Alternar pantalla completa
-    function toggleFullscreen(element) {
-      if (!document.fullscreenElement) {
-        // Guardar referencia a los posts de video para navegación
-        videoPosts = allPosts.filter(post => post.type !== 'gallos');
-        
-        element.requestFullscreen().catch(err => {
-          console.error(`Error al entrar en pantalla completa: ${err.message}`);
+// Configurar controles de video
+function setupVideoControls() {
+  document.addEventListener('click', function(e) {
+    // Reproducir/pausar al hacer clic en el video
+    if (e.target.tagName === 'VIDEO') {
+      const video = e.target;
+      if (video.paused) {
+        video.play().catch(err => {
+          console.error("Error al reproducir video:", err);
         });
       } else {
-        document.exitFullscreen();
-      }
-    }
-
-    // Determinar si un video es vertical (short) u horizontal
-    function isVideoShort(videoUrl) {
-      return new Promise((resolve) => {
-        const video = document.createElement('video');
-        video.src = videoUrl + '#t=0.1';
-        
-        video.onloadedmetadata = () => {
-          resolve(video.videoHeight > video.videoWidth);
-        };
-        
-        video.onerror = () => {
-          resolve(false); // Por defecto asumimos que no es short si hay error
-        };
-      });
-    }
-
-    // Cargar todas las publicaciones
-    async function loadAllPosts() {
-      try {
-        console.log("Cargando todas las publicaciones...");
-        
-        // Obtener publicaciones de todas las colecciones
-        const [gallosSnapshot, entrenamientosSnapshot, peleasSnapshot] = await Promise.all([
-          db.collection('PublicGallo').orderBy('timestamp', 'desc').get(),
-          db.collection('PublicEntrenamiento').orderBy('timestamp', 'desc').get(),
-          db.collection('PublicPelea').orderBy('timestamp', 'desc').get()
-        ]);
-        
-        // Procesar todas las publicaciones
-        allPosts = [];
-        
-        gallosSnapshot.forEach(doc => {
-          allPosts.push({...doc.data(), id: doc.id, type: 'gallos'});
-        });
-        
-        entrenamientosSnapshot.forEach(doc => {
-          allPosts.push({...doc.data(), id: doc.id, type: 'entrenamientos'});
-        });
-        
-        peleasSnapshot.forEach(doc => {
-          allPosts.push({...doc.data(), id: doc.id, type: 'peleas'});
-        });
-        
-        console.log(`Se encontraron ${allPosts.length} publicaciones`);
-        
-        // Mostrar publicaciones
-        displayPosts(allPosts);
-      } catch (error) {
-        console.error("Error al cargar publicaciones:", error);
-        showNotification('Error al cargar publicaciones', 'error');
-      }
-    }
-
-    // Mostrar publicaciones en el contenedor
-    async function displayPosts(posts) {
-      const container = document.getElementById('postsContainer');
-      
-      if (posts.length === 0) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <i class="fas fa-box-open"></i>
-            <p>No hay publicaciones disponibles</p>
-          </div>
-        `;
-        return;
-      }
-      
-      container.innerHTML = '';
-      
-      // Procesar cada publicación
-      for (const post of posts) {
-        // Formatear fecha
-        let postDate = 'Fecha no disponible';
-        if (post.timestamp && post.timestamp.toDate) {
-          try {
-            postDate = post.timestamp.toDate().toLocaleDateString('es-ES', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-          } catch (error) {
-            console.error("Error al formatear fecha:", error);
-          }
-        }
-        
-        // Determinar el contenido multimedia según el tipo
-        let mediaContent = '';
-        if (post.type === 'gallos') {
-          mediaContent = `
-            <div class="post-media-container">
-              <img src="${post.mediaUrl}" alt="${post.title}" class="post-image" 
-                   onclick="expandImage('${post.mediaUrl}')" 
-                   onerror="this.onerror=null;this.src='img/default-image.jpg'">
-            </div>
-          `;
-        } else {
-          // Determinar si es un video short (vertical) o normal (horizontal)
-          const isShort = await isVideoShort(post.mediaUrl);
-          
-          mediaContent = `
-            <div class="post-media-container">
-              <div class="video-container ${isShort ? 'short' : 'normal'}">
-                <video controls playsinline>
-                  <source src="${post.mediaUrl}" type="video/mp4">
-                  Tu navegador no soporta videos HTML5.
-                </video>
-              </div>
-            </div>
-          `;
-        }
-        
-        // Crear elemento de publicación
-        const postElement = document.createElement('div');
-        postElement.className = 'post-card';
-        postElement.innerHTML = `
-          <div class="post-header">
-            <img src="${post.userPhotoURL || 'img/default-profile.jpg'}" alt="Avatar" class="user-avatar" 
-                 onclick="viewUserProfile('${post.userId}')">
-            <div class="user-info">
-              <div class="user-name" onclick="viewUserProfile('${post.userId}')">${post.userDisplayName || 'Usuario'}</div>
-              <div class="post-time">${postDate}</div>
-            </div>
-            ${post.userId !== currentUser.uid ? 
-              `<button class="follow-btn" id="followBtn-${post.userId}" onclick="toggleFollow('${post.userId}', this)">
-                <i class="fas fa-user-plus"></i> Seguir
-              </button>` : ''
-            }
-          </div>
-          <div class="post-content">
-            <h3 class="post-title">${post.title || 'Sin título'}</h3>
-            <p class="post-description">${post.description || 'Sin descripción'}</p>
-            ${mediaContent}
-          </div>
-          <div class="post-footer">
-            <div class="post-actions">
-              <button class="action-btn" onclick="toggleLike('${post.type}', '${post.id}', this)">
-                <i class="fas fa-heart"></i> Me gusta
-              </button>
-              <button class="action-btn" onclick="toggleComments('${post.type}', '${post.id}', this)">
-                <i class="fas fa-comment"></i> Comentar
-              </button>
-            </div>
-            <div class="post-stats">
-              <span><i class="fas fa-heart"></i> ${post.likes || 0} likes</span>
-              <span style="margin-left: 10px;"><i class="fas fa-comment"></i> ${post.comments || 0} comentarios</span>
-            </div>
-          </div>
-          <div class="comments-section" id="comments-${post.id}">
-            <div class="comments-list" id="commentsList-${post.id}">
-              <!-- Los comentarios se cargarán aquí -->
-            </div>
-            <form class="comment-form" onsubmit="postComment('${post.type}', '${post.id}', event)">
-              <input type="text" class="comment-input" placeholder="Escribe un comentario..." required>
-              <button type="submit" class="comment-submit">Publicar</button>
-            </form>
-          </div>
-        `;
-        
-        container.appendChild(postElement);
-        
-        // Configurar estado del botón de seguir
-        if (post.userId !== currentUser.uid) {
-          setupFollowButton(post.userId);
-        }
-        
-        // Configurar estado del like
-        checkLikeStatus(post.type, post.id);
-      }
-    }
-
-    // Expandir imagen
-    function expandImage(imageUrl) {
-      const modal = document.getElementById('imageModal');
-      const img = document.getElementById('expandedImage');
-      img.src = imageUrl;
-      modal.style.display = 'flex';
-    }
-
-    // Cerrar modal de imagen
-    function closeImageModal() {
-      document.getElementById('imageModal').style.display = 'none';
-    }
-
-    // Mostrar modal de publicación
-    async function showPostModal(post) {
-      currentModalPost = post;
-      const modal = document.getElementById('postModal');
-      
-      // Configurar datos del usuario
-      document.getElementById('postModalAvatar').src = post.userPhotoURL || 'img/default-profile.jpg';
-      document.getElementById('postModalUserName').textContent = post.userDisplayName || 'Usuario';
-      
-      // Configurar fecha
-      let postDate = 'Fecha no disponible';
-      if (post.timestamp && post.timestamp.toDate) {
-        try {
-          postDate = post.timestamp.toDate().toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          });
-        } catch (error) {
-          console.error("Error al formatear fecha:", error);
-        }
-      }
-      document.getElementById('postModalTime').textContent = postDate;
-      
-      // Configurar título y descripción
-      document.getElementById('postModalTitle').textContent = post.title || 'Sin título';
-      document.getElementById('postModalDescription').textContent = post.description || 'Sin descripción';
-      
-      // Configurar media
-      const imageElement = document.getElementById('postModalImage');
-      const videoElement = document.getElementById('postModalVideo');
-      
-      imageElement.style.display = 'none';
-      videoElement.style.display = 'none';
-      
-      if (post.type === 'gallos') {
-        imageElement.src = post.mediaUrl;
-        imageElement.style.display = 'block';
-        imageElement.onerror = function() {
-          this.src = 'img/default-image.jpg';
-        };
-      } else {
-        videoElement.src = post.mediaUrl;
-        videoElement.style.display = 'block';
-      }
-      
-      // Configurar estadísticas
-      document.getElementById('postModalLikes').textContent = post.likes || 0;
-      document.getElementById('postModalComments').textContent = post.comments || 0;
-      
-      // Configurar botón de like
-      const likeBtn = document.getElementById('postModalLikeBtn');
-      const likeIcon = likeBtn.querySelector('i');
-      
-      try {
-        const likeDoc = await db.collection(getCollectionName(post.type))
-          .doc(post.id)
-          .collection('likes')
-          .doc(currentUser.uid)
-          .get();
-        
-        if (likeDoc.exists) {
-          likeIcon.classList.add('liked');
-          likeBtn.innerHTML = '<i class="fas fa-heart liked"></i> Me gusta';
-        } else {
-          likeIcon.classList.remove('liked');
-          likeBtn.innerHTML = '<i class="fas fa-heart"></i> Me gusta';
-        }
-      } catch (error) {
-        console.error("Error al verificar like:", error);
-      }
-      
-      // Ocultar sección de comentarios inicialmente
-      document.getElementById('postModalCommentsSection').style.display = 'none';
-      
-      // Mostrar modal
-      modal.style.display = 'block';
-      
-      // Reproducir video automáticamente si es un video
-      if (post.type !== 'gallos') {
-        setTimeout(() => {
-          const video = document.getElementById('postModalVideo');
-          video.play().catch(err => {
-            console.error("Error al reproducir video:", err);
-          });
-        }, 300);
-      }
-    }
-
-    // Cerrar modal de publicación
-    function closePostModal() {
-      const modal = document.getElementById('postModal');
-      modal.style.display = 'none';
-      
-      // Pausar video si está reproduciendo
-      const video = document.getElementById('postModalVideo');
-      if (video) {
         video.pause();
       }
-      
-      currentModalPost = null;
     }
-
-    // Alternar like en el modal de publicación
-    async function togglePostModalLike() {
-      if (!currentModalPost) return;
+    
+    // Botón de pantalla completa (ahora se activa al tocar el video)
+    if (e.target.tagName === 'VIDEO' || e.target.classList.contains('video-container')) {
+      const videoContainer = e.target.tagName === 'VIDEO' ? 
+                           e.target.parentElement : e.target;
       
-      const post = currentModalPost;
-      const likeBtn = document.getElementById('postModalLikeBtn');
-      const likeIcon = likeBtn.querySelector('i');
-      const likesCount = document.getElementById('postModalLikes');
-      
-      try {
-        const collectionName = getCollectionName(post.type);
-        const likeRef = db.collection(collectionName).doc(post.id)
-          .collection('likes').doc(currentUser.uid);
-        
-        const likeDoc = await likeRef.get();
-        
-        if (likeDoc.exists) {
-          // Quitar like
-          await likeRef.delete();
-          await db.collection(collectionName).doc(post.id).update({
-            likes: firebase.firestore.FieldValue.increment(-1)
-          });
-          
-          likeIcon.classList.remove('liked');
-          likeBtn.innerHTML = '<i class="fas fa-heart"></i> Me gusta';
-          likesCount.textContent = parseInt(likesCount.textContent) - 1;
-        } else {
-          // Dar like
-          await likeRef.set({
-            userId: currentUser.uid,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          await db.collection(collectionName).doc(post.id).update({
-            likes: firebase.firestore.FieldValue.increment(1)
-          });
-          
-          likeIcon.classList.add('liked');
-          likeBtn.innerHTML = '<i class="fas fa-heart liked"></i> Me gusta';
-          likesCount.textContent = parseInt(likesCount.textContent) + 1;
-        }
-      } catch (error) {
-        console.error("Error al actualizar like:", error);
-        showNotification('Error al actualizar like', 'error');
+      // Solo videos verticales (shorts) tendrán navegación por gestos
+      if (videoContainer.classList.contains('short')) {
+        toggleFullscreen(videoContainer);
       }
     }
+  });
+}
 
-    // Alternar sección de comentarios en el modal
-    async function togglePostModalComments() {
-      const commentsSection = document.getElementById('postModalCommentsSection');
-      
-      if (commentsSection.style.display === 'block') {
-        commentsSection.style.display = 'none';
+// Alternar pantalla completa
+function toggleFullscreen(element) {
+  if (!document.fullscreenElement) {
+    // Guardar referencia a los posts de video para navegación
+    videoPosts = allPosts.filter(post => post.type !== 'gallos');
+    
+    element.requestFullscreen().catch(err => {
+      console.error(`Error al entrar en pantalla completa: ${err.message}`);
+    });
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+// Determinar si un video es vertical (short) u horizontal
+function isVideoShort(videoUrl) {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.src = videoUrl + '#t=0.1';
+    
+    video.onloadedmetadata = () => {
+      resolve(video.videoHeight > video.videoWidth);
+    };
+    
+    video.onerror = () => {
+      resolve(false); // Por defecto asumimos que no es short si hay error
+    };
+  });
+}
+
+// Cargar todas las publicaciones
+async function loadAllPosts() {
+  try {
+    console.log("Cargando todas las publicaciones...");
+    
+    // Obtener publicaciones de todas las colecciones
+    const [gallosSnapshot, entrenamientosSnapshot, peleasSnapshot] = await Promise.all([
+      db.collection('PublicGallo').orderBy('timestamp', 'desc').get(),
+      db.collection('PublicEntrenamiento').orderBy('timestamp', 'desc').get(),
+      db.collection('PublicPelea').orderBy('timestamp', 'desc').get()
+    ]);
+    
+    // Procesar todas las publicaciones
+    allPosts = [];
+    
+    gallosSnapshot.forEach(doc => {
+      allPosts.push({...doc.data(), id: doc.id, type: 'gallos'});
+    });
+    
+    entrenamientosSnapshot.forEach(doc => {
+      allPosts.push({...doc.data(), id: doc.id, type: 'entrenamientos'});
+    });
+    
+    peleasSnapshot.forEach(doc => {
+      allPosts.push({...doc.data(), id: doc.id, type: 'peleas'});
+    });
+    
+    console.log(`Se encontraron ${allPosts.length} publicaciones`);
+    
+    // Mostrar publicaciones
+    displayPosts(allPosts);
+  } catch (error) {
+    console.error("Error al cargar publicaciones:", error);
+    showNotification('Error al cargar publicaciones', 'error');
+  }
+}
+
+// Mostrar publicaciones en el contenedor
+async function displayPosts(posts) {
+  const container = document.getElementById('postsContainer');
+  
+  if (posts.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-box-open"></i>
+        <p>No hay publicaciones disponibles</p>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = '';
+  
+  // Procesar cada publicación
+  for (const post of posts) {
+    // Obtener datos del usuario desde caché o Firestore
+    let userData = userCache[post.userId];
+    if (!userData) {
+      const userDoc = await db.collection('users').doc(post.userId).get();
+      if (userDoc.exists) {
+        userData = userDoc.data();
+        userCache[post.userId] = userData;
       } else {
-        commentsSection.style.display = 'block';
-        await loadPostModalComments();
+        userData = {
+          displayName: 'Usuario',
+          photoURL: 'img/default-profile.jpg',
+          email: ''
+        };
       }
     }
-
-    // Cargar comentarios en el modal
-    async function loadPostModalComments() {
-      if (!currentModalPost) return;
-      
-      const post = currentModalPost;
-      const commentsList = document.getElementById('postModalCommentsList');
-      commentsList.innerHTML = '<div style="text-align: center; padding: 10px;"><i class="fas fa-spinner fa-spin"></i></div>';
-      
+    
+    // Formatear fecha
+    let postDate = 'Fecha no disponible';
+    if (post.timestamp && post.timestamp.toDate) {
       try {
-        const commentsSnapshot = await db.collection(getCollectionName(post.type))
-          .doc(post.id)
-          .collection('comments')
-          .orderBy('timestamp', 'desc')
-          .get();
-        
-        if (commentsSnapshot.empty) {
-          commentsList.innerHTML = '<div style="text-align: center; padding: 10px; color: var(--text-gray);">No hay comentarios</div>';
-          return;
-        }
-        
-        // Obtener datos de los usuarios que comentaron
-        const commentsData = await Promise.all(
-          commentsSnapshot.docs.map(async doc => {
-            const commentData = doc.data();
-            const userDoc = await db.collection('users').doc(commentData.userId).get();
-            return {
-              ...commentData,
-              id: doc.id,
-              userData: userDoc.exists ? userDoc.data() : null
-            };
-          })
-        );
-        
-        commentsList.innerHTML = commentsData.map(comment => `
-          <div class="comment">
-            <img src="${comment.userData?.photoURL || 'img/default-profile.jpg'}" 
-                 alt="Avatar" 
-                 class="comment-avatar"
-                 onclick="viewUserProfile('${comment.userId}')">
-            <div class="comment-content">
-              <div class="comment-user" onclick="viewUserProfile('${comment.userId}')">
-                ${comment.userData?.displayName || 'Usuario'}
-              </div>
-              <div class="comment-text">${comment.text}</div>
-            </div>
+        postDate = post.timestamp.toDate().toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch (error) {
+        console.error("Error al formatear fecha:", error);
+      }
+    }
+    
+    // Determinar si el usuario actual dio like a esta publicación
+    const hasLike = likedPosts.has(`${post.type}_${post.id}`);
+    
+    // Determinar el contenido multimedia según el tipo
+    let mediaContent = '';
+    if (post.type === 'gallos') {
+      mediaContent = `
+        <div class="post-media-container">
+          <img src="${post.mediaUrl}" alt="${post.title}" class="post-image" 
+               onclick="expandImage('${post.mediaUrl}')" 
+               onerror="this.onerror=null;this.src='img/default-image.jpg'">
+        </div>
+      `;
+    } else {
+      // Determinar si es un video short (vertical) o normal (horizontal)
+      const isShort = await isVideoShort(post.mediaUrl);
+      
+      mediaContent = `
+        <div class="post-media-container">
+          <div class="video-container ${isShort ? 'short' : 'normal'}">
+            <video controls playsinline>
+              <source src="${post.mediaUrl}" type="video/mp4">
+              Tu navegador no soporta videos HTML5.
+            </video>
           </div>
-        `).join('');
-      } catch (error) {
-        console.error("Error al cargar comentarios:", error);
-        commentsList.innerHTML = '<div style="text-align: center; padding: 10px; color: var(--text-gray);">Error al cargar comentarios</div>';
-      }
+        </div>
+      `;
     }
-
-    // Publicar comentario en el modal
-    async function postModalComment(event) {
-      event.preventDefault();
-      if (!currentModalPost) return;
-      
-      const post = currentModalPost;
-      const input = document.getElementById('postModalCommentInput');
-      const commentText = input.value.trim();
-      
-      if (!commentText) return;
-      
-      try {
-        // Agregar comentario a Firestore
-        await db.collection(getCollectionName(post.type))
-          .doc(post.id)
-          .collection('comments')
-          .add({
-            userId: currentUser.uid,
-            text: commentText,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        
-        // Incrementar contador de comentarios
-        await db.collection(getCollectionName(post.type))
-          .doc(post.id)
-          .update({
-            comments: firebase.firestore.FieldValue.increment(1)
-          });
-        
-        // Actualizar contador en el modal
-        const commentsCount = document.getElementById('postModalComments');
-        commentsCount.textContent = parseInt(commentsCount.textContent) + 1;
-        
-        // Limpiar input
-        input.value = '';
-        
-        // Recargar comentarios
-        await loadPostModalComments();
-      } catch (error) {
-        console.error("Error al publicar comentario:", error);
-        showNotification('Error al publicar comentario', 'error');
-      }
+    
+    // Crear elemento de publicación
+    const postElement = document.createElement('div');
+    postElement.className = 'post-card';
+    postElement.innerHTML = `
+      <div class="post-header">
+        <img src="${userData.photoURL}" alt="Avatar" class="user-avatar" 
+             onclick="viewUserProfile('${post.userId}')">
+        <div class="user-info">
+          <div class="user-name" onclick="viewUserProfile('${post.userId}')">${userData.displayName}</div>
+          <div class="post-time">${postDate}</div>
+        </div>
+        ${post.userId !== currentUser.uid ? 
+          `<button class="follow-btn" id="followBtn-${post.userId}" onclick="toggleFollow('${post.userId}', this)">
+            <i class="fas fa-user-plus"></i> Seguir
+          </button>` : ''
+        }
+      </div>
+      <div class="post-content">
+        <h3 class="post-title">${post.title || 'Sin título'}</h3>
+        <p class="post-description">${post.description || 'Sin descripción'}</p>
+        ${mediaContent}
+      </div>
+      <div class="post-footer">
+        <div class="post-actions">
+          <button class="action-btn" onclick="toggleLike('${post.type}', '${post.id}', this)">
+            <i class="fas fa-heart ${hasLike ? 'liked' : ''}"></i> Me gusta
+          </button>
+          <button class="action-btn" onclick="toggleComments('${post.type}', '${post.id}', this)">
+            <i class="fas fa-comment"></i> Comentar
+          </button>
+        </div>
+        <div class="post-stats">
+          <span><i class="fas fa-heart"></i> ${post.likes?.length || 0} likes</span>
+          <span style="margin-left: 10px;"><i class="fas fa-comment"></i> ${post.comments || 0} comentarios</span>
+        </div>
+      </div>
+      <div class="comments-section" id="comments-${post.id}">
+        <div class="comments-list" id="commentsList-${post.id}">
+          <!-- Los comentarios se cargarán aquí -->
+        </div>
+        <form class="comment-form" onsubmit="postComment('${post.type}', '${post.id}', event)">
+          <input type="text" class="comment-input" placeholder="Escribe un comentario..." required>
+          <button type="submit" class="comment-submit">Publicar</button>
+        </form>
+      </div>
+    `;
+    
+    container.appendChild(postElement);
+    
+    // Configurar estado del botón de seguir
+    if (post.userId !== currentUser.uid) {
+      setupFollowButton(post.userId);
     }
+  }
+}
 
-    // Filtrar publicaciones
-    function filterPosts(type) {
-      currentFilter = type;
-      
-      // Actualizar botones de filtro
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active');
+// Expandir imagen
+function expandImage(imageUrl) {
+  const modal = document.getElementById('imageModal');
+  const img = document.getElementById('expandedImage');
+  img.src = imageUrl;
+  modal.style.display = 'flex';
+}
+
+// Cerrar modal de imagen
+function closeImageModal() {
+  document.getElementById('imageModal').style.display = 'none';
+}
+
+// Mostrar modal de publicación
+async function showPostModal(post) {
+  currentModalPost = post;
+  const modal = document.getElementById('postModal');
+  
+  // Obtener datos del usuario
+  let userData = userCache[post.userId];
+  if (!userData) {
+    const userDoc = await db.collection('users').doc(post.userId).get();
+    if (userDoc.exists) {
+      userData = userDoc.data();
+      userCache[post.userId] = userData;
+    } else {
+      userData = {
+        displayName: 'Usuario',
+        photoURL: 'img/default-profile.jpg',
+        email: ''
+      };
+    }
+  }
+  
+  // Configurar datos del usuario
+  document.getElementById('postModalAvatar').src = userData.photoURL;
+  document.getElementById('postModalUserName').textContent = userData.displayName;
+  
+  // Configurar fecha
+  let postDate = 'Fecha no disponible';
+  if (post.timestamp && post.timestamp.toDate) {
+    try {
+      postDate = post.timestamp.toDate().toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       });
-      event.target.classList.add('active');
-      
-      // Filtrar publicaciones
-      let filteredPosts = allPosts;
-      if (type !== 'all') {
-        filteredPosts = allPosts.filter(post => post.type === type);
-      }
-      
-      // Mostrar publicaciones filtradas
-      displayPosts(filteredPosts);
+    } catch (error) {
+      console.error("Error al formatear fecha:", error);
     }
+  }
+  document.getElementById('postModalTime').textContent = postDate;
+  
+  // Configurar título y descripción
+  document.getElementById('postModalTitle').textContent = post.title || 'Sin título';
+  document.getElementById('postModalDescription').textContent = post.description || 'Sin descripción';
+  
+  // Configurar media
+  const imageElement = document.getElementById('postModalImage');
+  const videoElement = document.getElementById('postModalVideo');
+  
+  imageElement.style.display = 'none';
+  videoElement.style.display = 'none';
+  
+  if (post.type === 'gallos') {
+    imageElement.src = post.mediaUrl;
+    imageElement.style.display = 'block';
+    imageElement.onerror = function() {
+      this.src = 'img/default-image.jpg';
+    };
+  } else {
+    videoElement.src = post.mediaUrl;
+    videoElement.style.display = 'block';
+  }
+  
+  // Configurar estadísticas
+  document.getElementById('postModalLikes').textContent = post.likes?.length || 0;
+  document.getElementById('postModalComments').textContent = post.comments || 0;
+  
+  // Configurar botón de like
+  const likeBtn = document.getElementById('postModalLikeBtn');
+  const hasLike = likedPosts.has(`${post.type}_${post.id}`);
+  
+  if (hasLike) {
+    likeBtn.innerHTML = '<i class="fas fa-heart liked"></i> Me gusta';
+  } else {
+    likeBtn.innerHTML = '<i class="fas fa-heart"></i> Me gusta';
+  }
+  
+  // Ocultar sección de comentarios inicialmente
+  document.getElementById('postModalCommentsSection').style.display = 'none';
+  
+  // Mostrar modal
+  modal.style.display = 'block';
+  
+  // Reproducir video automáticamente si es un video
+  if (post.type !== 'gallos') {
+    setTimeout(() => {
+      const video = document.getElementById('postModalVideo');
+      video.play().catch(err => {
+        console.error("Error al reproducir video:", err);
+      });
+    }, 300);
+  }
+}
 
-    // Ver perfil de usuario
-    async function viewUserProfile(userId) {
-      currentProfileUserId = userId;
+// Cerrar modal de publicación
+function closePostModal() {
+  const modal = document.getElementById('postModal');
+  modal.style.display = 'none';
+  
+  // Pausar video si está reproduciendo
+  const video = document.getElementById('postModalVideo');
+  if (video) {
+    video.pause();
+  }
+  
+  currentModalPost = null;
+}
+
+// Alternar like en el modal de publicación
+async function togglePostModalLike() {
+  if (!currentModalPost) return;
+  
+  const post = currentModalPost;
+  const likeBtn = document.getElementById('postModalLikeBtn');
+  const likeIcon = likeBtn.querySelector('i');
+  const likesCount = document.getElementById('postModalLikes');
+  const postKey = `${post.type}_${post.id}`;
+  
+  try {
+    const collectionName = getCollectionName(post.type);
+    const postRef = db.collection(collectionName).doc(post.id);
+    
+    if (likedPosts.has(postKey)) {
+      // Quitar like
+      await postRef.update({
+        likes: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
+      });
       
-      try {
-        // Cargar datos del usuario
-        const userDoc = await db.collection('users').doc(userId).get();
-        
-        if (!userDoc.exists) {
-          showNotification('Perfil no encontrado', 'error');
-          return;
-        }
-        
-        currentProfileUserData = userDoc.data();
-        
-        // Mostrar datos del usuario
-        document.getElementById('profileUserName').textContent = currentProfileUserData.displayName || 'Usuario';
-        document.getElementById('profileUserEmail').textContent = currentProfileUserData.email || '';
-        document.getElementById('profileAvatar').src = currentProfileUserData.photoURL || 'img/default-profile.jpg';
-        
-        // Ocultar botón de seguir si es el perfil propio
-        if (userId === currentUser.uid) {
-          document.getElementById('profileFollowBtn').style.display = 'none';
-        } else {
-          document.getElementById('profileFollowBtn').style.display = 'block';
-          setupFollowButton(userId, 'profileFollowBtn');
-        }
-        
-        // Cargar estadísticas
-        loadProfileStats(userId);
-        
-        // Cargar publicaciones del usuario
-        loadProfilePosts(userId);
-        
-        // Mostrar vista de perfil
-        showProfileView();
-      } catch (error) {
-        console.error("Error al cargar perfil:", error);
-        showNotification('Error al cargar perfil', 'error');
-      }
+      likedPosts.delete(postKey);
+      likeIcon.classList.remove('liked');
+      likeBtn.innerHTML = '<i class="fas fa-heart"></i> Me gusta';
+      likesCount.textContent = parseInt(likesCount.textContent) - 1;
+    } else {
+      // Dar like
+      await postRef.update({
+        likes: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+      });
+      
+      likedPosts.add(postKey);
+      likeIcon.classList.add('liked');
+      likeBtn.innerHTML = '<i class="fas fa-heart liked"></i> Me gusta';
+      likesCount.textContent = parseInt(likesCount.textContent) + 1;
     }
+    
+    // Actualizar like en todas las instancias de esta publicación
+    updateLikeInAllPosts(post.type, post.id, likedPosts.has(postKey));
+    
+  } catch (error) {
+    console.error("Error al actualizar like:", error);
+    showNotification('Error al actualizar like', 'error');
+  }
+}
 
-    // Cargar estadísticas del perfil
-    async function loadProfileStats(userId) {
-      try {
-        // Contar publicaciones
-        const [gallosCount, entrenamientosCount, peleasCount] = await Promise.all([
-          db.collection('PublicGallo').where('userId', '==', userId).get(),
-          db.collection('PublicEntrenamiento').where('userId', '==', userId).get(),
-          db.collection('PublicPelea').where('userId', '==', userId).get()
-        ]);
-        
-        const totalPosts = gallosCount.size + entrenamientosCount.size + peleasCount.size;
-        document.getElementById('profilePostsCount').textContent = totalPosts;
-        
-        // Contar seguidores
-        const followersSnapshot = await db.collection('followers')
-          .doc(userId)
-          .collection('userFollowers')
-          .get();
-        document.getElementById('profileFollowersCount').textContent = followersSnapshot.size;
-        
-        // Contar seguidos
-        const followingSnapshot = await db.collection('followers')
-          .doc(userId)
-          .collection('userFollowing')
-          .get();
-        document.getElementById('profileFollowingCount').textContent = followingSnapshot.size;
-      } catch (error) {
-        console.error("Error al cargar estadísticas:", error);
-      }
+// Actualizar like en todas las instancias de una publicación
+function updateLikeInAllPosts(postType, postId, hasLike) {
+  // Actualizar en posts principales
+  const likeButtons = document.querySelectorAll(`[onclick="toggleLike('${postType}', '${postId}', this)"]`);
+  likeButtons.forEach(button => {
+    const icon = button.querySelector('i');
+    if (hasLike) {
+      icon.classList.add('liked');
+      button.innerHTML = '<i class="fas fa-heart liked"></i> Me gusta';
+    } else {
+      icon.classList.remove('liked');
+      button.innerHTML = '<i class="fas fa-heart"></i> Me gusta';
     }
+  });
+  
+  // Actualizar contadores de likes
+  const likeCounters = document.querySelectorAll(`#comments-${postId}`);
+  likeCounters.forEach(container => {
+    const stats = container.previousElementSibling.querySelector('.post-stats');
+    if (stats) {
+      const currentCount = parseInt(stats.textContent.match(/\d+/)[0]);
+      stats.innerHTML = `
+        <span><i class="fas fa-heart"></i> ${hasLike ? currentCount + 1 : currentCount - 1} likes</span>
+        ${stats.innerHTML.includes('comentarios') ? 
+          stats.innerHTML.split('</span>')[1] : ''}
+      `;
+    }
+  });
+}
 
-    // Cargar publicaciones del perfil (CORREGIDO)
-    async function loadProfilePosts(userId) {
-      try {
-        // Obtener todas las publicaciones del usuario
-        const [gallosSnapshot, entrenamientosSnapshot, peleasSnapshot] = await Promise.all([
-          db.collection('PublicGallo').where('userId', '==', userId).get(),
-          db.collection('PublicEntrenamiento').where('userId', '==', userId).get(),
-          db.collection('PublicPelea').where('userId', '==', userId).get()
-        ]);
-        
-        const postsGrid = document.getElementById('profilePostsGrid');
-        postsGrid.innerHTML = '';
-        
-        // Combinar todas las publicaciones
-        const userPosts = [];
-        
-        gallosSnapshot.forEach(doc => {
-          userPosts.push({...doc.data(), id: doc.id, type: 'gallos'});
-        });
-        
-        entrenamientosSnapshot.forEach(doc => {
-          userPosts.push({...doc.data(), id: doc.id, type: 'entrenamientos'});
-        });
-        
-        peleasSnapshot.forEach(doc => {
-          userPosts.push({...doc.data(), id: doc.id, type: 'peleas'});
-        });
-        
-        if (userPosts.length === 0) {
-          postsGrid.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-gray);">
-              <i class="fas fa-box-open" style="font-size: 30px;"></i>
-              <p>No hay publicaciones</p>
-            </div>
-          `;
-          return;
-        }
-        
-        // Ordenar por fecha (más reciente primero)
-        userPosts.sort((a, b) => {
-          const dateA = a.timestamp?.toDate() || new Date(0);
-          const dateB = b.timestamp?.toDate() || new Date(0);
-          return dateB - dateA;
-        });
-        
-        // Mostrar publicaciones en el grid
-        userPosts.forEach(post => {
-          if (post.type === 'gallos') {
-            postsGrid.innerHTML += `
-              <div class="profile-post" onclick="showPostModal(${JSON.stringify(post).replace(/"/g, '&quot;')})">
-                <img src="${post.mediaUrl}" alt="${post.title}" onerror="this.onerror=null;this.src='img/default-image.jpg'">
-              </div>
-            `;
+// Alternar sección de comentarios en el modal
+async function togglePostModalComments() {
+  const commentsSection = document.getElementById('postModalCommentsSection');
+  
+  if (commentsSection.style.display === 'block') {
+    commentsSection.style.display = 'none';
+  } else {
+    commentsSection.style.display = 'block';
+    await loadPostModalComments();
+  }
+}
+
+// Cargar comentarios en el modal
+async function loadPostModalComments() {
+  if (!currentModalPost) return;
+  
+  const post = currentModalPost;
+  const commentsList = document.getElementById('postModalCommentsList');
+  commentsList.innerHTML = '<div style="text-align: center; padding: 10px;"><i class="fas fa-spinner fa-spin"></i></div>';
+  
+  try {
+    const commentsSnapshot = await db.collection(getCollectionName(post.type))
+      .doc(post.id)
+      .collection('comments')
+      .orderBy('timestamp', 'desc')
+      .get();
+    
+    if (commentsSnapshot.empty) {
+      commentsList.innerHTML = '<div style="text-align: center; padding: 10px; color: var(--text-gray);">No hay comentarios</div>';
+      return;
+    }
+    
+    // Obtener datos de los usuarios que comentaron
+    const commentsData = await Promise.all(
+      commentsSnapshot.docs.map(async doc => {
+        const commentData = doc.data();
+        let userData = userCache[commentData.userId];
+        if (!userData) {
+          const userDoc = await db.collection('users').doc(commentData.userId).get();
+          if (userDoc.exists) {
+            userData = userDoc.data();
+            userCache[commentData.userId] = userData;
           } else {
-            postsGrid.innerHTML += `
-              <div class="profile-post" onclick="showPostModal(${JSON.stringify(post).replace(/"/g, '&quot;')})">
-                <video>
-                  <source src="${post.mediaUrl}#t=0.1" type="video/mp4">
-                </video>
-                <div class="video-icon">
-                  <i class="fas fa-play"></i>
-                </div>
-              </div>
-            `;
+            userData = {
+              displayName: 'Usuario',
+              photoURL: 'img/default-profile.jpg',
+              email: ''
+            };
           }
-        });
-      } catch (error) {
-        console.error("Error al cargar publicaciones del perfil:", error);
-        postsGrid.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-gray);">
-            <i class="fas fa-exclamation-triangle" style="font-size: 30px;"></i>
-            <p>Error al cargar publicaciones</p>
+        }
+        return {
+          ...commentData,
+          id: doc.id,
+          userData: userData
+        };
+      })
+    );
+    
+    commentsList.innerHTML = commentsData.map(comment => `
+      <div class="comment">
+        <img src="${comment.userData.photoURL}" 
+             alt="Avatar" 
+             class="comment-avatar"
+             onclick="viewUserProfile('${comment.userId}')">
+        <div class="comment-content">
+          <div class="comment-user" onclick="viewUserProfile('${comment.userId}')">
+            ${comment.userData.displayName}
+          </div>
+          <div class="comment-text">${comment.text}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch (error) {
+    console.error("Error al cargar comentarios:", error);
+    commentsList.innerHTML = '<div style="text-align: center; padding: 10px; color: var(--text-gray);">Error al cargar comentarios</div>';
+  }
+}
+
+// Publicar comentario en el modal
+async function postModalComment(event) {
+  event.preventDefault();
+  if (!currentModalPost) return;
+  
+  const post = currentModalPost;
+  const input = document.getElementById('postModalCommentInput');
+  const commentText = input.value.trim();
+  
+  if (!commentText) return;
+  
+  try {
+    // Agregar comentario a Firestore
+    await db.collection(getCollectionName(post.type))
+      .doc(post.id)
+      .collection('comments')
+      .add({
+        userId: currentUser.uid,
+        text: commentText,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    
+    // Incrementar contador de comentarios
+    await db.collection(getCollectionName(post.type))
+      .doc(post.id)
+      .update({
+        comments: firebase.firestore.FieldValue.increment(1)
+      });
+    
+    // Actualizar contador en el modal
+    const commentsCount = document.getElementById('postModalComments');
+    commentsCount.textContent = parseInt(commentsCount.textContent) + 1;
+    
+    // Limpiar input
+    input.value = '';
+    
+    // Recargar comentarios
+    await loadPostModalComments();
+    
+    // Actualizar contador en todas las instancias de esta publicación
+    updateCommentCountInAllPosts(post.type, post.id, parseInt(commentsCount.textContent));
+    
+  } catch (error) {
+    console.error("Error al publicar comentario:", error);
+    showNotification('Error al publicar comentario', 'error');
+  }
+}
+
+// Actualizar contador de comentarios en todas las instancias de una publicación
+function updateCommentCountInAllPosts(postType, postId, count) {
+  // Actualizar en posts principales
+  const commentSections = document.querySelectorAll(`#comments-${postId}`);
+  commentSections.forEach(section => {
+    const stats = section.previousElementSibling.querySelector('.post-stats');
+    if (stats) {
+      stats.innerHTML = stats.innerHTML.replace(
+        /(<i class="fas fa-comment"><\/i> )\d+/,
+        `$1${count}`
+      );
+    }
+  });
+}
+
+// Filtrar publicaciones
+function filterPosts(type) {
+  currentFilter = type;
+  
+  // Actualizar botones de filtro
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  
+  // Filtrar publicaciones
+  let filteredPosts = allPosts;
+  if (type !== 'all') {
+    filteredPosts = allPosts.filter(post => post.type === type);
+  }
+  
+  // Mostrar publicaciones filtradas
+  displayPosts(filteredPosts);
+}
+
+// Ver perfil de usuario
+async function viewUserProfile(userId) {
+  currentProfileUserId = userId;
+  
+  try {
+    // Cargar datos del usuario
+    const userDoc = await db.collection('users').doc(userId).get();
+    
+    if (!userDoc.exists) {
+      showNotification('Perfil no encontrado', 'error');
+      return;
+    }
+    
+    currentProfileUserData = userDoc.data();
+    userCache[userId] = currentProfileUserData;
+    
+    // Mostrar datos del usuario
+    document.getElementById('profileUserName').textContent = currentProfileUserData.displayName || 'Usuario';
+    document.getElementById('profileUserEmail').textContent = currentProfileUserData.email || '';
+    document.getElementById('profileAvatar').src = currentProfileUserData.photoURL || 'img/default-profile.jpg';
+    
+    // Ocultar botón de seguir si es el perfil propio
+    if (userId === currentUser.uid) {
+      document.getElementById('profileFollowBtn').style.display = 'none';
+    } else {
+      document.getElementById('profileFollowBtn').style.display = 'block';
+      setupFollowButton(userId, 'profileFollowBtn');
+    }
+    
+    // Cargar estadísticas
+    loadProfileStats(userId);
+    
+    // Cargar publicaciones del usuario
+    loadProfilePosts(userId);
+    
+    // Mostrar vista de perfil
+    showProfileView();
+  } catch (error) {
+    console.error("Error al cargar perfil:", error);
+    showNotification('Error al cargar perfil', 'error');
+  }
+}
+
+// Cargar estadísticas del perfil
+async function loadProfileStats(userId) {
+  try {
+    // Contar publicaciones
+    const [gallosCount, entrenamientosCount, peleasCount] = await Promise.all([
+      db.collection('PublicGallo').where('userId', '==', userId).get(),
+      db.collection('PublicEntrenamiento').where('userId', '==', userId).get(),
+      db.collection('PublicPelea').where('userId', '==', userId).get()
+    ]);
+    
+    const totalPosts = gallosCount.size + entrenamientosCount.size + peleasCount.size;
+    document.getElementById('profilePostsCount').textContent = totalPosts;
+    
+    // Contar seguidores
+    const followersSnapshot = await db.collection('followers')
+      .doc(userId)
+      .collection('userFollowers')
+      .get();
+    document.getElementById('profileFollowersCount').textContent = followersSnapshot.size;
+    
+    // Contar seguidos
+    const followingSnapshot = await db.collection('followers')
+      .doc(userId)
+      .collection('userFollowing')
+      .get();
+    document.getElementById('profileFollowingCount').textContent = followingSnapshot.size;
+  } catch (error) {
+    console.error("Error al cargar estadísticas:", error);
+  }
+}
+
+// Cargar publicaciones del perfil
+async function loadProfilePosts(userId) {
+  try {
+    // Obtener todas las publicaciones del usuario
+    const [gallosSnapshot, entrenamientosSnapshot, peleasSnapshot] = await Promise.all([
+      db.collection('PublicGallo').where('userId', '==', userId).get(),
+      db.collection('PublicEntrenamiento').where('userId', '==', userId).get(),
+      db.collection('PublicPelea').where('userId', '==', userId).get()
+    ]);
+    
+    const postsGrid = document.getElementById('profilePostsGrid');
+    postsGrid.innerHTML = '';
+    
+    // Combinar todas las publicaciones
+    const userPosts = [];
+    
+    gallosSnapshot.forEach(doc => {
+      userPosts.push({...doc.data(), id: doc.id, type: 'gallos'});
+    });
+    
+    entrenamientosSnapshot.forEach(doc => {
+      userPosts.push({...doc.data(), id: doc.id, type: 'entrenamientos'});
+    });
+    
+    peleasSnapshot.forEach(doc => {
+      userPosts.push({...doc.data(), id: doc.id, type: 'peleas'});
+    });
+    
+    if (userPosts.length === 0) {
+      postsGrid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-gray);">
+          <i class="fas fa-box-open" style="font-size: 30px;"></i>
+          <p>No hay publicaciones</p>
+        </div>
+      `;
+      return;
+    }
+    
+    // Ordenar por fecha (más reciente primero)
+    userPosts.sort((a, b) => {
+      const dateA = a.timestamp?.toDate() || new Date(0);
+      const dateB = b.timestamp?.toDate() || new Date(0);
+      return dateB - dateA;
+    });
+    
+    // Mostrar publicaciones en el grid
+    userPosts.forEach(post => {
+      const postKey = `${post.type}_${post.id}`;
+      const hasLike = likedPosts.has(postKey);
+      
+      if (post.type === 'gallos') {
+        postsGrid.innerHTML += `
+          <div class="profile-post" onclick="showPostModal(${JSON.stringify(post).replace(/"/g, '&quot;')})">
+            <img src="${post.mediaUrl}" alt="${post.title}" onerror="this.onerror=null;this.src='img/default-image.jpg'">
+            ${hasLike ? '<div class="like-indicator"><i class="fas fa-heart"></i></div>' : ''}
+          </div>
+        `;
+      } else {
+        postsGrid.innerHTML += `
+          <div class="profile-post" onclick="showPostModal(${JSON.stringify(post).replace(/"/g, '&quot;')})">
+            <video>
+              <source src="${post.mediaUrl}#t=0.1" type="video/mp4">
+            </video>
+            <div class="video-icon">
+              <i class="fas fa-play"></i>
+            </div>
+            ${hasLike ? '<div class="like-indicator"><i class="fas fa-heart"></i></div>' : ''}
           </div>
         `;
       }
-    }
+    });
+  } catch (error) {
+    console.error("Error al cargar publicaciones del perfil:", error);
+    postsGrid.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-gray);">
+        <i class="fas fa-exclamation-triangle" style="font-size: 30px;"></i>
+        <p>Error al cargar publicaciones</p>
+      </div>
+    `;
+  }
+}
 
-    // Mostrar vista de perfil
-    function showProfileView() {
-      document.getElementById('postsContainer').style.display = 'none';
-      document.getElementById('profileContainer').style.display = 'block';
-      
-      // Mostrar sección de publicaciones por defecto
-      showProfilePosts();
-    }
+// Mostrar vista de perfil
+function showProfileView() {
+  document.getElementById('postsContainer').style.display = 'none';
+  document.getElementById('profileContainer').style.display = 'block';
+  
+  // Mostrar sección de publicaciones por defecto
+  showProfilePosts();
+}
 
-    // Mostrar vista de publicaciones
-    function showPostsView() {
-      document.getElementById('profileContainer').style.display = 'none';
-      document.getElementById('postsContainer').style.display = 'flex';
-    }
+// Mostrar vista de publicaciones
+function showPostsView() {
+  document.getElementById('profileContainer').style.display = 'none';
+  document.getElementById('postsContainer').style.display = 'flex';
+}
 
-    // Mostrar publicaciones en el perfil
-    function showProfilePosts() {
-      document.getElementById('profilePostsGrid').style.display = 'grid';
-      document.getElementById('profileFollowersList').style.display = 'none';
-      document.getElementById('profileFollowingList').style.display = 'none';
-      document.getElementById('profileSectionTitle').textContent = 'Publicaciones';
-    }
+// Mostrar publicaciones en el perfil
+function showProfilePosts() {
+  document.getElementById('profilePostsGrid').style.display = 'grid';
+  document.getElementById('profileFollowersList').style.display = 'none';
+  document.getElementById('profileFollowingList').style.display = 'none';
+  document.getElementById('profileSectionTitle').textContent = 'Publicaciones';
+}
 
-    // Mostrar seguidores en el perfil
-    async function showProfileFollowers() {
-      const followersList = document.getElementById('profileFollowersList');
-      followersList.style.display = 'block';
-      document.getElementById('profilePostsGrid').style.display = 'none';
-      document.getElementById('profileFollowingList').style.display = 'none';
-      document.getElementById('profileSectionTitle').textContent = 'Seguidores';
-      
-      try {
-        const followersSnapshot = await db.collection('followers')
-          .doc(currentProfileUserId)
-          .collection('userFollowers')
-          .get();
-        
-        if (followersSnapshot.empty) {
-          followersList.innerHTML = '<p style="color: var(--text-gray); text-align: center;">No tiene seguidores</p>';
-          return;
-        }
-        
-        // Obtener datos de cada seguidor
-        const followersData = await Promise.all(
-          followersSnapshot.docs.map(async doc => {
-            const userDoc = await db.collection('users').doc(doc.id).get();
-            return userDoc.exists ? { ...userDoc.data(), userId: doc.id } : null;
-          })
-        );
-        
-        followersList.innerHTML = followersData.filter(user => user !== null).map(user => `
-          <div style="display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-            <img src="${user.photoURL || 'img/default-profile.jpg'}" 
-                 alt="Perfil" 
-                 style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer;"
-                 onclick="viewUserProfile('${user.userId}')">
-            <div style="flex: 1; cursor: pointer;" onclick="viewUserProfile('${user.userId}')">
-              <div style="font-weight: bold;">${user.displayName || 'Usuario'}</div>
-              <div style="font-size: 12px; color: var(--text-gray);">${user.email || ''}</div>
-            </div>
-            ${user.userId !== currentUser.uid ? 
-              `<button class="follow-btn" id="followerFollowBtn-${user.userId}" 
-                onclick="toggleFollow('${user.userId}', this)" style="padding: 5px 10px;">
-                <i class="fas fa-user-plus"></i> Seguir
-              </button>` : ''
-            }
-          </div>
-        `).join('');
-        
-        // Configurar botones de seguir
-        followersData.forEach(user => {
-          if (user && user.userId !== currentUser.uid) {
-            setupFollowButton(user.userId, `followerFollowBtn-${user.userId}`);
+// Mostrar seguidores en el perfil
+async function showProfileFollowers() {
+  const followersList = document.getElementById('profileFollowersList');
+  followersList.style.display = 'block';
+  document.getElementById('profilePostsGrid').style.display = 'none';
+  document.getElementById('profileFollowingList').style.display = 'none';
+  document.getElementById('profileSectionTitle').textContent = 'Seguidores';
+  
+  try {
+    const followersSnapshot = await db.collection('followers')
+      .doc(currentProfileUserId)
+      .collection('userFollowers')
+      .get();
+    
+    if (followersSnapshot.empty) {
+      followersList.innerHTML = '<p style="color: var(--text-gray); text-align: center;">No tiene seguidores</p>';
+      return;
+    }
+    
+    // Obtener datos de cada seguidor
+    const followersData = await Promise.all(
+      followersSnapshot.docs.map(async doc => {
+        let userData = userCache[doc.id];
+        if (!userData) {
+          const userDoc = await db.collection('users').doc(doc.id).get();
+          if (userDoc.exists) {
+            userData = userDoc.data();
+            userCache[doc.id] = userData;
+          } else {
+            userData = {
+              displayName: 'Usuario',
+              photoURL: 'img/default-profile.jpg',
+              email: ''
+            };
           }
-        });
-      } catch (error) {
-        console.error("Error al cargar seguidores:", error);
-        followersList.innerHTML = '<p style="color: var(--text-gray); text-align: center;">Error al cargar seguidores</p>';
-      }
-    }
-
-    // Mostrar seguidos en el perfil
-    async function showProfileFollowing() {
-      const followingList = document.getElementById('profileFollowingList');
-      followingList.style.display = 'block';
-      document.getElementById('profilePostsGrid').style.display = 'none';
-      document.getElementById('profileFollowersList').style.display = 'none';
-      document.getElementById('profileSectionTitle').textContent = 'Seguidos';
-      
-      try {
-        const followingSnapshot = await db.collection('followers')
-          .doc(currentProfileUserId)
-          .collection('userFollowing')
-          .get();
-        
-        if (followingSnapshot.empty) {
-          followingList.innerHTML = '<p style="color: var(--text-gray); text-align: center;">No sigue a nadie</p>';
-          return;
         }
-        
-        // Obtener datos de cada usuario seguido
-        const followingData = await Promise.all(
-          followingSnapshot.docs.map(async doc => {
-            const userDoc = await db.collection('users').doc(doc.id).get();
-            return userDoc.exists ? { ...userDoc.data(), userId: doc.id } : null;
-          })
-        );
-        
-        followingList.innerHTML = followingData.filter(user => user !== null).map(user => `
-          <div style="display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-            <img src="${user.photoURL || 'img/default-profile.jpg'}" 
-                 alt="Perfil" 
-                 style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer;"
-                 onclick="viewUserProfile('${user.userId}')">
-            <div style="flex: 1; cursor: pointer;" onclick="viewUserProfile('${user.userId}')">
-              <div style="font-weight: bold;">${user.displayName || 'Usuario'}</div>
-              <div style="font-size: 12px; color: var(--text-gray);">${user.email || ''}</div>
-            </div>
-            ${user.userId !== currentUser.uid ? 
-              `<button class="follow-btn" id="followingFollowBtn-${user.userId}" 
-                onclick="toggleFollow('${user.userId}', this)" style="padding: 5px 10px;">
-                <i class="fas fa-user-plus"></i> Seguir
-              </button>` : ''
-            }
-          </div>
-        `).join('');
-        
-        // Configurar botones de seguir
-        followingData.forEach(user => {
-          if (user && user.userId !== currentUser.uid) {
-            setupFollowButton(user.userId, `followingFollowBtn-${user.userId}`);
-          }
-        });
-      } catch (error) {
-        console.error("Error al cargar seguidos:", error);
-        followingList.innerHTML = '<p style="color: var(--text-gray); text-align: center;">Error al cargar seguidos</p>';
+        return { ...userData, userId: doc.id };
+      })
+    );
+    
+    followersList.innerHTML = followersData.filter(user => user !== null).map(user => `
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <img src="${user.photoURL}" 
+             alt="Perfil" 
+             style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer;"
+             onclick="viewUserProfile('${user.userId}')">
+        <div style="flex: 1; cursor: pointer;" onclick="viewUserProfile('${user.userId}')">
+          <div style="font-weight: bold;">${user.displayName}</div>
+          <div style="font-size: 12px; color: var(--text-gray);">${user.email}</div>
+        </div>
+        ${user.userId !== currentUser.uid ? 
+          `<button class="follow-btn" id="followerFollowBtn-${user.userId}" 
+            onclick="toggleFollow('${user.userId}', this)" style="padding: 5px 10px;">
+            <i class="fas fa-user-plus"></i> Seguir
+          </button>` : ''
+        }
+      </div>
+    `).join('');
+    
+    // Configurar botones de seguir
+    followersData.forEach(user => {
+      if (user && user.userId !== currentUser.uid) {
+        setupFollowButton(user.userId, `followerFollowBtn-${user.userId}`);
       }
-    }
+    });
+  } catch (error) {
+    console.error("Error al cargar seguidores:", error);
+    followersList.innerHTML = '<p style="color: var(--text-gray); text-align: center;">Error al cargar seguidores</p>';
+  }
+}
 
-    // Configurar botón de seguir
-    async function setupFollowButton(userId, buttonId = null) {
-      const button = buttonId ? 
-        document.getElementById(buttonId) : 
-        document.getElementById(`followBtn-${userId}`);
-      
-      if (!button) return;
-      
-      // Verificar si ya seguimos a este usuario
-      const followDoc = await db.collection('followers')
+// Mostrar seguidos en el perfil
+async function showProfileFollowing() {
+  const followingList = document.getElementById('profileFollowingList');
+  followingList.style.display = 'block';
+  document.getElementById('profilePostsGrid').style.display = 'none';
+  document.getElementById('profileFollowersList').style.display = 'none';
+  document.getElementById('profileSectionTitle').textContent = 'Seguidos';
+  
+  try {
+    const followingSnapshot = await db.collection('followers')
+      .doc(currentProfileUserId)
+      .collection('userFollowing')
+      .get();
+    
+    if (followingSnapshot.empty) {
+      followingList.innerHTML = '<p style="color: var(--text-gray); text-align: center;">No sigue a nadie</p>';
+      return;
+    }
+    
+    // Obtener datos de cada usuario seguido
+    const followingData = await Promise.all(
+      followingSnapshot.docs.map(async doc => {
+        let userData = userCache[doc.id];
+        if (!userData) {
+          const userDoc = await db.collection('users').doc(doc.id).get();
+          if (userDoc.exists) {
+            userData = userDoc.data();
+            userCache[doc.id] = userData;
+          } else {
+            userData = {
+              displayName: 'Usuario',
+              photoURL: 'img/default-profile.jpg',
+              email: ''
+            };
+          }
+        }
+        return { ...userData, userId: doc.id };
+      })
+    );
+    
+    followingList.innerHTML = followingData.filter(user => user !== null).map(user => `
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <img src="${user.photoURL}" 
+             alt="Perfil" 
+             style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer;"
+             onclick="viewUserProfile('${user.userId}')">
+        <div style="flex: 1; cursor: pointer;" onclick="viewUserProfile('${user.userId}')">
+          <div style="font-weight: bold;">${user.displayName}</div>
+          <div style="font-size: 12px; color: var(--text-gray);">${user.email}</div>
+        </div>
+        ${user.userId !== currentUser.uid ? 
+          `<button class="follow-btn" id="followingFollowBtn-${user.userId}" 
+            onclick="toggleFollow('${user.userId}', this)" style="padding: 5px 10px;">
+            <i class="fas fa-user-plus"></i> Seguir
+          </button>` : ''
+        }
+      </div>
+    `).join('');
+    
+    // Configurar botones de seguir
+    followingData.forEach(user => {
+      if (user && user.userId !== currentUser.uid) {
+        setupFollowButton(user.userId, `followingFollowBtn-${user.userId}`);
+      }
+    });
+  } catch (error) {
+    console.error("Error al cargar seguidos:", error);
+    followingList.innerHTML = '<p style="color: var(--text-gray); text-align: center;">Error al cargar seguidos</p>';
+  }
+}
+
+// Configurar botón de seguir
+async function setupFollowButton(userId, buttonId = null) {
+  const button = buttonId ? 
+    document.getElementById(buttonId) : 
+    document.getElementById(`followBtn-${userId}`);
+  
+  if (!button) return;
+  
+  // Verificar si ya seguimos a este usuario
+  const followDoc = await db.collection('followers')
+    .doc(userId)
+    .collection('userFollowers')
+    .doc(currentUser.uid)
+    .get();
+  
+  if (followDoc.exists) {
+    // Ya lo seguimos
+    button.innerHTML = '<i class="fas fa-user-check"></i> Siguiendo';
+    button.className = 'follow-btn btn-following';
+  } else {
+    // No lo seguimos
+    button.innerHTML = '<i class="fas fa-user-plus"></i> Seguir';
+    button.className = 'follow-btn btn-follow';
+  }
+}
+
+// Alternar seguir/dejar de seguir
+async function toggleFollow(userId, button) {
+  try {
+    const isFollowing = button.classList.contains('btn-following');
+    
+    if (!isFollowing) {
+      // Seguir al usuario
+      await db.collection('followers')
         .doc(userId)
         .collection('userFollowers')
         .doc(currentUser.uid)
-        .get();
-      
-      if (followDoc.exists) {
-        // Ya lo seguimos
-        button.innerHTML = '<i class="fas fa-user-check"></i> Siguiendo';
-        button.className = 'follow-btn btn-following';
-      } else {
-        // No lo seguimos
-        button.innerHTML = '<i class="fas fa-user-plus"></i> Seguir';
-        button.className = 'follow-btn btn-follow';
-      }
-    }
-
-    // Alternar seguir/dejar de seguir
-    async function toggleFollow(userId, button) {
-      try {
-        const isFollowing = button.classList.contains('btn-following');
-        
-        if (!isFollowing) {
-          // Seguir al usuario
-          await db.collection('followers')
-            .doc(userId)
-            .collection('userFollowers')
-            .doc(currentUser.uid)
-            .set({
-              userId: currentUser.uid,
-              timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-          
-          // Agregar a nuestra lista de seguidos
-          await db.collection('followers')
-            .doc(currentUser.uid)
-            .collection('userFollowing')
-            .doc(userId)
-            .set({
-              userId: userId,
-              timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-          
-          // Actualizar UI
-          button.innerHTML = '<i class="fas fa-user-check"></i> Siguiendo';
-          button.className = 'follow-btn btn-following';
-          
-          // Actualizar contador si estamos viendo el perfil
-          if (currentProfileUserId === userId) {
-            const currentCount = parseInt(document.getElementById('profileFollowersCount').textContent);
-            document.getElementById('profileFollowersCount').textContent = currentCount + 1;
-          }
-          
-          showNotification('Ahora sigues a este usuario', 'success');
-        } else {
-          // Dejar de seguir
-          await db.collection('followers')
-            .doc(userId)
-            .collection('userFollowers')
-            .doc(currentUser.uid)
-            .delete();
-            
-          await db.collection('followers')
-            .doc(currentUser.uid)
-            .collection('userFollowing')
-            .doc(userId)
-            .delete();
-          
-          // Actualizar UI
-          button.innerHTML = '<i class="fas fa-user-plus"></i> Seguir';
-          button.className = 'follow-btn btn-follow';
-          
-          // Actualizar contador si estamos viendo el perfil
-          if (currentProfileUserId === userId) {
-            const currentCount = parseInt(document.getElementById('profileFollowersCount').textContent);
-            document.getElementById('profileFollowersCount').textContent = Math.max(0, currentCount - 1);
-          }
-          
-          showNotification('Has dejado de seguir a este usuario', 'success');
-        }
-        
-        // Actualizar botones en todas las publicaciones de este usuario
-        document.querySelectorAll(`#followBtn-${userId}`).forEach(btn => {
-          btn.innerHTML = isFollowing ? 
-            '<i class="fas fa-user-plus"></i> Seguir' : 
-            '<i class="fas fa-user-check"></i> Siguiendo';
-          btn.className = isFollowing ? 
-            'follow-btn btn-follow' : 
-            'follow-btn btn-following';
+        .set({
+          userId: currentUser.uid,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
-      } catch (error) {
-        console.error("Error al actualizar seguimiento:", error);
-        showNotification('Error al actualizar seguimiento', 'error');
-      }
-    }
-
-    // Verificar estado de like
-    async function checkLikeStatus(postType, postId) {
-      try {
-        const likeDoc = await db.collection(getCollectionName(postType))
-          .doc(postId)
-          .collection('likes')
-          .doc(currentUser.uid)
-          .get();
-        
-        if (likeDoc.exists) {
-          const likeBtn = document.querySelector(`#comments-${postId}`).previousElementSibling
-            .querySelector('.action-btn:nth-child(1)');
-          likeBtn.innerHTML = '<i class="fas fa-heart liked"></i> Me gusta';
-        }
-      } catch (error) {
-        console.error("Error al verificar like:", error);
-      }
-    }
-
-    // Alternar like en una publicación
-    async function toggleLike(postType, postId, button) {
-      try {
-        const collectionName = getCollectionName(postType);
-        const likeRef = db.collection(collectionName).doc(postId)
-          .collection('likes').doc(currentUser.uid);
-        
-        const likeDoc = await likeRef.get();
-        
-        if (likeDoc.exists) {
-          // Quitar like
-          await likeRef.delete();
-          await db.collection(collectionName).doc(postId).update({
-            likes: firebase.firestore.FieldValue.increment(-1)
-          });
-          
-          button.innerHTML = '<i class="fas fa-heart"></i> Me gusta';
-          button.querySelector('i').classList.remove('liked');
-        } else {
-          // Dar like
-          await likeRef.set({
-            userId: currentUser.uid,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          await db.collection(collectionName).doc(postId).update({
-            likes: firebase.firestore.FieldValue.increment(1)
-          });
-          
-          button.innerHTML = '<i class="fas fa-heart liked"></i> Me gusta';
-          button.querySelector('i').classList.add('liked');
-        }
-        
-        // Actualizar contador
-        const statsElement = button.closest('.post-footer').querySelector('.post-stats');
-        const likesCount = parseInt(statsElement.textContent.match(/\d+/)[0]);
-        statsElement.innerHTML = `
-          <span><i class="fas fa-heart"></i> ${likeDoc.exists ? likesCount - 1 : likesCount + 1} likes</span>
-          ${statsElement.innerHTML.includes('comentarios') ? 
-            statsElement.innerHTML.split('</span>')[1] : ''}
-        `;
-      } catch (error) {
-        console.error("Error al actualizar like:", error);
-        showNotification('Error al actualizar like', 'error');
-      }
-    }
-
-    // Alternar sección de comentarios
-    async function toggleComments(postType, postId, button) {
-      const commentsSection = document.getElementById(`comments-${postId}`);
       
-      if (commentsSection.style.display === 'block') {
-        commentsSection.style.display = 'none';
+      // Agregar a nuestra lista de seguidos
+      await db.collection('followers')
+        .doc(currentUser.uid)
+        .collection('userFollowing')
+        .doc(userId)
+        .set({
+          userId: userId,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      
+      // Actualizar UI
+      button.innerHTML = '<i class="fas fa-user-check"></i> Siguiendo';
+      button.className = 'follow-btn btn-following';
+      
+      // Actualizar contador si estamos viendo el perfil
+      if (currentProfileUserId === userId) {
+        const currentCount = parseInt(document.getElementById('profileFollowersCount').textContent);
+        document.getElementById('profileFollowersCount').textContent = currentCount + 1;
+      }
+      
+      showNotification('Ahora sigues a este usuario', 'success');
+    } else {
+      // Dejar de seguir
+      await db.collection('followers')
+        .doc(userId)
+        .collection('userFollowers')
+        .doc(currentUser.uid)
+        .delete();
+        
+      await db.collection('followers')
+        .doc(currentUser.uid)
+        .collection('userFollowing')
+        .doc(userId)
+        .delete();
+      
+      // Actualizar UI
+      button.innerHTML = '<i class="fas fa-user-plus"></i> Seguir';
+      button.className = 'follow-btn btn-follow';
+      
+      // Actualizar contador si estamos viendo el perfil
+      if (currentProfileUserId === userId) {
+        const currentCount = parseInt(document.getElementById('profileFollowersCount').textContent);
+        document.getElementById('profileFollowersCount').textContent = Math.max(0, currentCount - 1);
+      }
+      
+      showNotification('Has dejado de seguir a este usuario', 'success');
+    }
+    
+    // Actualizar botones en todas las publicaciones de este usuario
+    document.querySelectorAll(`#followBtn-${userId}`).forEach(btn => {
+      btn.innerHTML = isFollowing ? 
+        '<i class="fas fa-user-plus"></i> Seguir' : 
+        '<i class="fas fa-user-check"></i> Siguiendo';
+      btn.className = isFollowing ? 
+        'follow-btn btn-follow' : 
+        'follow-btn btn-following';
+    });
+  } catch (error) {
+    console.error("Error al actualizar seguimiento:", error);
+    showNotification('Error al actualizar seguimiento', 'error');
+  }
+}
+
+// Alternar like en una publicación
+async function toggleLike(postType, postId, button) {
+  try {
+    const collectionName = getCollectionName(postType);
+    const postRef = db.collection(collectionName).doc(postId);
+    const postKey = `${postType}_${postId}`;
+    
+    if (likedPosts.has(postKey)) {
+      // Quitar like
+      await postRef.update({
+        likes: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
+      });
+      
+      likedPosts.delete(postKey);
+      button.innerHTML = '<i class="fas fa-heart"></i> Me gusta';
+      button.querySelector('i').classList.remove('liked');
+    } else {
+      // Dar like
+      await postRef.update({
+        likes: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+      });
+      
+      likedPosts.add(postKey);
+      button.innerHTML = '<i class="fas fa-heart liked"></i> Me gusta';
+      button.querySelector('i').classList.add('liked');
+    }
+    
+    // Actualizar contador
+    const statsElement = button.closest('.post-footer').querySelector('.post-stats');
+    const likesCount = parseInt(statsElement.textContent.match(/\d+/)[0]);
+    statsElement.innerHTML = `
+      <span><i class="fas fa-heart"></i> ${likedPosts.has(postKey) ? likesCount + 1 : likesCount - 1} likes</span>
+      ${statsElement.innerHTML.includes('comentarios') ? 
+        statsElement.innerHTML.split('</span>')[1] : ''}
+    `;
+    
+    // Actualizar en el modal si está abierto
+    if (currentModalPost && currentModalPost.id === postId && currentModalPost.type === postType) {
+      const modalLikeBtn = document.getElementById('postModalLikeBtn');
+      const modalLikesCount = document.getElementById('postModalLikes');
+      
+      if (likedPosts.has(postKey)) {
+        modalLikeBtn.innerHTML = '<i class="fas fa-heart liked"></i> Me gusta';
+        modalLikesCount.textContent = parseInt(modalLikesCount.textContent) + 1;
       } else {
-        commentsSection.style.display = 'block';
-        loadComments(postType, postId);
+        modalLikeBtn.innerHTML = '<i class="fas fa-heart"></i> Me gusta';
+        modalLikesCount.textContent = parseInt(modalLikesCount.textContent) - 1;
       }
     }
-
-    // Cargar comentarios
-    async function loadComments(postType, postId) {
-      const commentsList = document.getElementById(`commentsList-${postId}`);
-      commentsList.innerHTML = '<div style="text-align: center; padding: 10px;"><i class="fas fa-spinner fa-spin"></i></div>';
-      
-      try {
-        const commentsSnapshot = await db.collection(getCollectionName(postType))
-          .doc(postId)
-          .collection('comments')
-          .orderBy('timestamp', 'desc')
-          .get();
-        
-        if (commentsSnapshot.empty) {
-          commentsList.innerHTML = '<div style="text-align: center; padding: 10px; color: var(--text-gray);">No hay comentarios</div>';
-          return;
+    
+    // Actualizar en el perfil si está visible
+    if (currentProfileUserId) {
+      const profilePost = document.querySelector(`.profile-post[onclick*="${postId}"]`);
+      if (profilePost) {
+        if (likedPosts.has(postKey)) {
+          if (!profilePost.querySelector('.like-indicator')) {
+            profilePost.innerHTML += '<div class="like-indicator"><i class="fas fa-heart"></i></div>';
+          }
+        } else {
+          const indicator = profilePost.querySelector('.like-indicator');
+          if (indicator) {
+            indicator.remove();
+          }
         }
-        
-        // Obtener datos de los usuarios que comentaron
-        const commentsData = await Promise.all(
-          commentsSnapshot.docs.map(async doc => {
-            const commentData = doc.data();
-            const userDoc = await db.collection('users').doc(commentData.userId).get();
-            return {
-              ...commentData,
-              id: doc.id,
-              userData: userDoc.exists ? userDoc.data() : null
+      }
+    }
+    
+  } catch (error) {
+    console.error("Error al actualizar like:", error);
+    showNotification('Error al actualizar like', 'error');
+  }
+}
+
+// Alternar sección de comentarios
+async function toggleComments(postType, postId, button) {
+  const commentsSection = document.getElementById(`comments-${postId}`);
+  
+  if (commentsSection.style.display === 'block') {
+    commentsSection.style.display = 'none';
+  } else {
+    commentsSection.style.display = 'block';
+    loadComments(postType, postId);
+  }
+}
+
+// Cargar comentarios
+async function loadComments(postType, postId) {
+  const commentsList = document.getElementById(`commentsList-${postId}`);
+  commentsList.innerHTML = '<div style="text-align: center; padding: 10px;"><i class="fas fa-spinner fa-spin"></i></div>';
+  
+  try {
+    const commentsSnapshot = await db.collection(getCollectionName(postType))
+      .doc(postId)
+      .collection('comments')
+      .orderBy('timestamp', 'desc')
+      .get();
+    
+    if (commentsSnapshot.empty) {
+      commentsList.innerHTML = '<div style="text-align: center; padding: 10px; color: var(--text-gray);">No hay comentarios</div>';
+      return;
+    }
+    
+    // Obtener datos de los usuarios que comentaron
+    const commentsData = await Promise.all(
+      commentsSnapshot.docs.map(async doc => {
+        const commentData = doc.data();
+        let userData = userCache[commentData.userId];
+        if (!userData) {
+          const userDoc = await db.collection('users').doc(commentData.userId).get();
+          if (userDoc.exists) {
+            userData = userDoc.data();
+            userCache[commentData.userId] = userData;
+          } else {
+            userData = {
+              displayName: 'Usuario',
+              photoURL: 'img/default-profile.jpg',
+              email: ''
             };
-          })
-        );
-        
-        commentsList.innerHTML = commentsData.map(comment => `
-          <div class="comment">
-            <img src="${comment.userData?.photoURL || 'img/default-profile.jpg'}" 
-                 alt="Avatar" 
-                 class="comment-avatar"
-                 onclick="viewUserProfile('${comment.userId}')">
-            <div class="comment-content">
-              <div class="comment-user" onclick="viewUserProfile('${comment.userId}')">
-                ${comment.userData?.displayName || 'Usuario'}
-              </div>
-              <div class="comment-text">${comment.text}</div>
-            </div>
+          }
+        }
+        return {
+          ...commentData,
+          id: doc.id,
+          userData: userData
+        };
+      })
+    );
+    
+    commentsList.innerHTML = commentsData.map(comment => `
+      <div class="comment">
+        <img src="${comment.userData.photoURL}" 
+             alt="Avatar" 
+             class="comment-avatar"
+             onclick="viewUserProfile('${comment.userId}')">
+        <div class="comment-content">
+          <div class="comment-user" onclick="viewUserProfile('${comment.userId}')">
+            ${comment.userData.displayName}
           </div>
-        `).join('');
-      } catch (error) {
-        console.error("Error al cargar comentarios:", error);
-        commentsList.innerHTML = '<div style="text-align: center; padding: 10px; color: var(--text-gray);">Error al cargar comentarios</div>';
+          <div class="comment-text">${comment.text}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch (error) {
+    console.error("Error al cargar comentarios:", error);
+    commentsList.innerHTML = '<div style="text-align: center; padding: 10px; color: var(--text-gray);">Error al cargar comentarios</div>';
+  }
+}
+
+// Publicar comentario
+async function postComment(postType, postId, event) {
+  event.preventDefault();
+  const form = event.target;
+  const input = form.querySelector('.comment-input');
+  const commentText = input.value.trim();
+  
+  if (!commentText) return;
+  
+  try {
+    // Agregar comentario a Firestore
+    await db.collection(getCollectionName(postType))
+      .doc(postId)
+      .collection('comments')
+      .add({
+        userId: currentUser.uid,
+        text: commentText,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    
+    // Incrementar contador de comentarios
+    await db.collection(getCollectionName(postType))
+      .doc(postId)
+      .update({
+        comments: firebase.firestore.FieldValue.increment(1)
+      });
+    
+    // Limpiar input
+    input.value = '';
+    
+    // Recargar comentarios
+    loadComments(postType, postId);
+    
+    // Actualizar contador en la interfaz
+    const statsElement = form.closest('.post-card').querySelector('.post-stats');
+    const commentsCount = parseInt(statsElement.textContent.match(/comentarios.*?(\d+)/)[1]);
+    statsElement.innerHTML = statsElement.innerHTML.replace(
+      /(<i class="fas fa-comment"><\/i> )\d+/,
+      `$1${commentsCount + 1}`
+    );
+    
+    // Actualizar en el modal si está abierto
+    if (currentModalPost && currentModalPost.id === postId && currentModalPost.type === postType) {
+      const modalCommentsCount = document.getElementById('postModalComments');
+      modalCommentsCount.textContent = parseInt(modalCommentsCount.textContent) + 1;
+      
+      // Si la sección de comentarios está visible, recargar
+      const commentsSection = document.getElementById('postModalCommentsSection');
+      if (commentsSection.style.display === 'block') {
+        loadPostModalComments();
       }
     }
+  } catch (error) {
+    console.error("Error al publicar comentario:", error);
+    showNotification('Error al publicar comentario', 'error');
+  }
+}
 
-    // Publicar comentario
-    async function postComment(postType, postId, event) {
-      event.preventDefault();
-      const form = event.target;
-      const input = form.querySelector('.comment-input');
-      const commentText = input.value.trim();
-      
-      if (!commentText) return;
-      
-      try {
-        // Agregar comentario a Firestore
-        await db.collection(getCollectionName(postType))
-          .doc(postId)
-          .collection('comments')
-          .add({
-            userId: currentUser.uid,
-            text: commentText,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        
-        // Incrementar contador de comentarios
-        await db.collection(getCollectionName(postType))
-          .doc(postId)
-          .update({
-            comments: firebase.firestore.FieldValue.increment(1)
-          });
-        
-        // Limpiar input
-        input.value = '';
-        
-        // Recargar comentarios
-        loadComments(postType, postId);
-        
-        // Actualizar contador en la interfaz
-        const statsElement = form.closest('.post-card').querySelector('.post-stats');
-        const commentsCount = parseInt(statsElement.textContent.match(/comentarios.*?(\d+)/)[1]);
-        statsElement.innerHTML = statsElement.innerHTML.replace(
-          /(<i class="fas fa-comment"><\/i> )\d+/,
-          `$1${commentsCount + 1}`
-        );
-      } catch (error) {
-        console.error("Error al publicar comentario:", error);
-        showNotification('Error al publicar comentario', 'error');
-      }
-    }
+// Ver detalle de una publicación
+function viewPostDetail(type, postId) {
+  console.log(`Viendo detalle de publicación ${postId} de tipo ${type}`);
+  window.location.href = `detalle.html?type=${type}&id=${postId}`;
+}
 
-    // Ver detalle de una publicación
-    function viewPostDetail(type, postId) {
-      console.log(`Viendo detalle de publicación ${postId} de tipo ${type}`);
-      window.location.href = `detalle.html?type=${type}&id=${postId}`;
-    }
+// Obtener nombre de colección según tipo
+function getCollectionName(type) {
+  switch(type) {
+    case 'gallos': return 'PublicGallo';
+    case 'entrenamientos': return 'PublicEntrenamiento';
+    case 'peleas': return 'PublicPelea';
+    default: return '';
+  }
+}
 
-    // Obtener nombre de colección según tipo
-    function getCollectionName(type) {
-      switch(type) {
-        case 'gallos': return 'PublicGallo';
-        case 'entrenamientos': return 'PublicEntrenamiento';
-        case 'peleas': return 'PublicPelea';
-        default: return '';
-      }
-    }
-
-    // Mostrar notificación
-    function showNotification(message, type) {
-      const notification = document.getElementById('notification');
-      const notificationText = document.getElementById('notificationText');
-      
-      notificationText.textContent = message;
-      notification.className = `notification ${type} show`;
-      
-      setTimeout(() => {
-        notification.classList.remove('show');
-      }, 3000);
-    }
-  </script>
+// Mostrar notificación
+function showNotification(message, type) {
+  const notification = document.getElementById('notification');
+  const notificationText = document.getElementById('notificationText');
+  
+  notificationText.textContent = message;
+  notification.className = `notification ${type} show`;
+  
+  setTimeout(() => {
+    notification.classList.remove('show');
+  }, 3000);
+}
+          
+          </script>
 </body>
 </html>
