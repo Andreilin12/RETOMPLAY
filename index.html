@@ -1,1 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #000;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .login-container {
+            background-color: #00/;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 350px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: white;
+        }
+        .nav-tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .nav-tabs button {
+            background-color: #ff0000;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .nav-tabs button:hover {
+            background-color: #cccc;
+        }
+        .nav-tabs .active {
+            background-color: #ff0000;
+        }
+        .form-container {
+            display: none;
+            transition: all 0.3s ease;
+        }
+        .form-container.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        input[type="text"], input[type="email"], input[type="password"], input[type="tel"], select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+        .btn {
+            background-color: #ff0000;
+            color: white;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #ccc;
+        }
+        .btn-back {
+            background-color: #6c757d;
+            margin-top: 10px;
+        }
+        .btn-back:hover {
+            background-color: #5a6268;
+        }
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .progress-steps:before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #ddd;
+            z-index: 1;
+            transform: translateY(-50%);
+        }
+        .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+            font-weight: bold;
+            position: relative;
+            z-index: 2;
+        }
+        .step.active {
+            background-color: #ff0000;
+            color: white;
+        }
+        .step.completed {
+            background-color: #ff0000;
+            color: white;
+        }
 
+        /* Desactivar la selección de texto y el efecto de arrastre en todos los elementos */
+        * {
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none; /* estándar */
+
+            -webkit-user-drag: none; /* Safari */
+            -khtml-user-drag: none; /* Konqueror HTML */
+            -moz-user-drag: none; /* Firefox */
+            -o-user-drag: none; /* Opera */
+            user-drag: none; /* estándar */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <h2>Bienvenido a RETOM Playa Palmera</h2>
+    
+    <div class="progress-steps">
+        <div id="step1" class="step active">1</div>
+        <div id="step2" class="step">2</div>
+    </div>
+
+    <div id="emailStep" class="form-container active">
+        <form id="emailForm">
+            <input type="email" id="loginEmail" placeholder="Correo Electrónico" required>
+            <button type="submit" class="btn">Continuar</button>
+        </form>
+    </div>
+
+    <div id="passwordStep" class="form-container">
+        <form id="loginForm">
+            <div style="text-align: left; margin-bottom: 10px; color: white;">
+                Correo: <span id="displayEmail"></span>
+            </div>
+            <input type="password" id="loginPassword" placeholder="Contraseña" required>
+            <button type="submit" class="btn">Iniciar Sesión</button>
+            <button type="button" id="backButton" class="btn btn-back">Volver</button>
+        </form>
+    </div>
+</div>
+
+<script type="module">
+    // Import the necessary Firebase services
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    // Configuración de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyDLi-egzQlgbKW8XV_qIhU6313Gd8gocCg",
+  authDomain: "inventario-35d6b.firebaseapp.com",
+  databaseURL: "https://inventario-35d6b-default-rtdb.firebaseio.com",
+  projectId: "inventario-35d6b",
+  storageBucket: "inventario-35d6b.appspot.com",
+  messagingSenderId: "266100399659",
+  appId: "1:266100399659:web:92358d28cbd803c8a7d46e"
+};
+    
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // DOM elements 
+    const emailStep = document.getElementById('emailStep');
+    const passwordStep = document.getElementById('passwordStep');
+    const emailForm = document.getElementById('emailForm');
+    const loginForm = document.getElementById('loginForm');
+    const backButton = document.getElementById('backButton');
+    const displayEmail = document.getElementById('displayEmail');
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+
+    // Handle email form submission
+    emailForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        
+        // Validate email format
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            alert("Por favor ingrese un correo electrónico válido");
+            return;
+        }
+        
+        // Store email and proceed to password step
+        displayEmail.textContent = email;
+        emailStep.classList.remove('active');
+        passwordStep.classList.add('active');
+        
+        // Update progress steps
+        step1.classList.remove('active');
+        step1.classList.add('completed');
+        step2.classList.add('active');
+    });
+
+    // Handle back button click
+    backButton.addEventListener('click', () => {
+        passwordStep.classList.remove('active');
+        emailStep.classList.add('active');
+        
+        // Update progress steps
+        step2.classList.remove('active');
+        step1.classList.add('active');
+        step1.classList.remove('completed');
+    });
+
+    // Handle login form submission
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        signInWithEmailAndPassword(auth, email, password)
+            .then((userCredential) => {
+                // Iniciar sesión exitosa
+                window.location.href = "index.html"; // Redirigir a la página principal
+            })
+            .catch((error) => {
+                console.error(error);
+                alert("Error al iniciar sesión: " + error.message);
+            });
+    });
+</script>
+
+</body>
+</html>
