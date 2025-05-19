@@ -7,15 +7,20 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
-      --primary-color: #fe2c55;
-      --primary-dark: #e61e40;
-      --secondary-color: #25F4EE;
+      --primary-color: #2196F3;
+      --primary-dark: #2196F3;
+      --secondary-color: #fff;
       --background: #121212;
       --card-bg: #1e1e1e;
       --text-light: #ffffff;
       --text-gray: #a8a8a8;
       --border-radius: 12px;
       --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      --button-gradient: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+      --button-hover-gradient: linear-gradient(45deg, #2575fc 0%, #6a11cb 100%);
+      --success-color: #4CAF50;
+      --warning-color: #FFC107;
+      --info-color: #2196F3;
     }
 
     * {
@@ -30,7 +35,7 @@
       background: var(--background);
       color: var(--text-light);
       line-height: 1.6;
-      padding-bottom: 70px; /* Espacio para el menú inferior */
+      padding-bottom: 70px;
       overscroll-behavior-y: contain;
       -webkit-overflow-scrolling: touch;
     }
@@ -64,49 +69,58 @@
     .logo-text {
       font-weight: bold;
       font-size: 18px;
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .search-container {
       position: relative;
+      flex: 1;
+      max-width: 250px;
+      margin: 0 10px;
     }
 
     .search-icon {
-      font-size: 20px;
-      cursor: pointer;
-      color: var(--text-light);
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      color: var(--text-gray);
+      z-index: 2;
     }
 
     .search-input {
-      position: absolute;
-      top: 100%;
-      right: 0;
-      width: 250px;
-      padding: 10px 15px;
+      width: 100%;
+      padding: 8px 15px 8px 35px;
       border: none;
-      border-radius: var(--border-radius);
-      background: var(--card-bg);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.1);
       color: var(--text-light);
-      box-shadow: var(--box-shadow);
-      display: none;
-      z-index: 101;
+      font-size: 14px;
+      transition: all 0.3s ease;
     }
 
-    .search-input.active {
-      display: block;
+    .search-input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 0 2px rgba(37, 244, 238, 0.3);
     }
 
     .search-results {
       position: absolute;
-      top: 140%;
+      top: 100%;
+      left: 0;
       right: 0;
-      width: 250px;
       max-height: 300px;
       overflow-y: auto;
       background: var(--card-bg);
-      border-radius: var(--border-radius);
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
       box-shadow: var(--box-shadow);
       display: none;
       z-index: 102;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .search-results.active {
@@ -149,6 +163,9 @@
     .page-title {
       font-size: 20px;
       font-weight: bold;
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .filter-controls {
@@ -166,17 +183,20 @@
     .filter-btn {
       padding: 8px 12px;
       border: none;
-      border-radius: var(--border-radius);
+      border-radius: 50px;
       background: rgba(255, 255, 255, 0.1);
       color: var(--text-light);
       cursor: pointer;
       transition: all 0.3s ease;
       white-space: nowrap;
       font-size: 14px;
+      font-weight: 500;
     }
 
     .filter-btn.active {
-      background: var(--primary-color);
+      background: var(--button-gradient);
+      color: white;
+      box-shadow: 0 4px 15px rgba(106, 17, 203, 0.3);
     }
 
     .filter-btn:hover {
@@ -194,11 +214,13 @@
       border-radius: var(--border-radius);
       overflow: hidden;
       box-shadow: var(--box-shadow);
-      transition: transform 0.3s ease;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .post-card:hover {
       transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     }
 
     .post-header {
@@ -215,6 +237,12 @@
       border-radius: 50%;
       object-fit: cover;
       cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.3s ease;
+    }
+
+    .user-avatar:hover {
+      border-color: var(--primary-color);
     }
 
     .user-info {
@@ -240,16 +268,18 @@
     .follow-btn {
       padding: 5px 10px;
       border: none;
-      border-radius: var(--border-radius);
+      border-radius: 50px;
       font-size: 12px;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.3s ease;
+      min-width: 80px;
     }
 
     .btn-follow {
-      background: var(--secondary-color);
-      color: #000;
+      background: var(--button-gradient);
+      color: white;
+      box-shadow: 0 4px 10px rgba(106, 17, 203, 0.3);
     }
 
     .btn-following {
@@ -332,7 +362,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.7);
       z-index: 10;
     }
 
@@ -351,6 +381,60 @@
       height: 100%;
       object-fit: cover;
       z-index: 5;
+      filter: brightness(0.7);
+    }
+
+    /* Controles de video personalizados */
+    .video-controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .video-container:hover .video-controls {
+      opacity: 1;
+    }
+
+    .video-progress {
+      flex: 1;
+      height: 4px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      margin: 0 10px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .video-progress-filled {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: var(--primary-color);
+      border-radius: 2px;
+    }
+
+    .video-time {
+      font-size: 12px;
+      color: white;
+      margin: 0 5px;
+    }
+
+    .video-fullscreen-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      margin-left: 10px;
     }
 
     .post-footer {
@@ -374,11 +458,16 @@
       color: var(--text-light);
       cursor: pointer;
       font-size: 14px;
+      transition: all 0.3s ease;
     }
 
     .action-btn i {
       transition: color 0.3s ease;
       font-size: 18px;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
     }
 
     .action-btn:hover i {
@@ -465,6 +554,11 @@
       color: white;
       cursor: pointer;
       font-size: 14px;
+      transition: background 0.3s ease;
+    }
+
+    .comment-submit:hover {
+      background: var(--primary-dark);
     }
 
     /* Perfil de usuario */
@@ -520,6 +614,14 @@
       text-align: center;
       cursor: pointer;
       flex: 1;
+      padding: 10px;
+      border-radius: var(--border-radius);
+      background: rgba(255, 255, 255, 0.05);
+      transition: background 0.3s ease;
+    }
+
+    .profile-stat:hover {
+      background: rgba(255, 255, 255, 0.1);
     }
 
     .stat-number {
@@ -552,6 +654,11 @@
       overflow: hidden;
       cursor: pointer;
       position: relative;
+      transition: transform 0.3s ease;
+    }
+
+    .profile-post:hover {
+      transform: scale(1.03);
     }
 
     .profile-post img {
@@ -587,6 +694,21 @@
       justify-content: center;
     }
 
+    .like-indicator {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      color: var(--primary-color);
+      background: rgba(0,0,0,0.5);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+
     .back-to-posts {
       display: flex;
       align-items: center;
@@ -595,6 +717,11 @@
       color: var(--primary-color);
       cursor: pointer;
       font-size: 14px;
+      transition: transform 0.3s ease;
+    }
+
+    .back-to-posts:hover {
+      transform: translateX(-3px);
     }
 
     /* Menú inferior */
@@ -640,7 +767,7 @@
     }
 
     .menu-item.home {
-      background: var(--primary-color);
+      background: var(--button-gradient);
       width: 50px;
       height: 50px;
       border-radius: 50%;
@@ -649,9 +776,15 @@
       align-items: center;
       color: white;
       transform: translateY(-15px);
-      box-shadow: 0 4px 10px rgba(254, 44, 85, 0.3);
+      box-shadow: 0 4px 15px rgba(106, 17, 203, 0.3);
       flex: 0 0 auto;
       margin: 0 10px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .menu-item.home:hover {
+      transform: translateY(-15px) scale(1.1);
+      box-shadow: 0 6px 20px rgba(106, 17, 203, 0.4);
     }
 
     .menu-item.home i {
@@ -715,6 +848,11 @@
       font-size: 30px;
       cursor: pointer;
       z-index: 1001;
+      transition: transform 0.3s ease;
+    }
+
+    .close-image-modal:hover {
+      transform: scale(1.2);
     }
 
     /* Modal de publicación */
@@ -768,6 +906,11 @@
     .post-modal-close {
       font-size: 24px;
       cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .post-modal-close:hover {
+      transform: scale(1.2);
     }
 
     .post-modal-media {
@@ -775,6 +918,7 @@
       margin-bottom: 15px;
       border-radius: var(--border-radius);
       overflow: hidden;
+      position: relative;
     }
 
     .post-modal-image {
@@ -851,11 +995,19 @@
     }
 
     .notification.success {
-      background: #28a745;
+      background: var(--success-color);
     }
 
     .notification.error {
-      background: #dc3545;
+      background: var(--primary-color);
+    }
+
+    .notification.warning {
+      background: var(--warning-color);
+    }
+
+    .notification.info {
+      background: var(--info-color);
     }
 
     /* Estilos para pantalla completa */
@@ -921,6 +1073,8 @@
       z-index: 10000;
       display: none;
       pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
 
     /* Loading spinner */
@@ -963,6 +1117,206 @@
 
     .section.active {
       display: block;
+    }
+
+    /* Nuevos estilos para el formulario de publicación */
+    .create-post-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 1000;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .create-post-content {
+      max-width: 500px;
+      width: 90%;
+      margin: 20px auto;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      color: white;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .create-post-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .create-post-title {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .create-post-close {
+      font-size: 24px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .create-post-close:hover {
+      transform: scale(1.2);
+    }
+
+    .create-post-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-label {
+      font-size: 14px;
+      color: var(--text-gray);
+    }
+
+    .form-input, .form-textarea, .form-select {
+      padding: 10px 15px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--border-radius);
+      background: rgba(255,255,255,0.05);
+      color: var(--text-light);
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(254, 44, 85, 0.2);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .media-preview {
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      border-radius: var(--border-radius);
+      display: none;
+    }
+
+    .video-preview {
+      width: 100%;
+      max-height: 300px;
+      border-radius: var(--border-radius);
+      display: none;
+    }
+
+    .upload-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 15px;
+      background: rgba(255,255,255,0.1);
+      border: 1px dashed rgba(255,255,255,0.3);
+      border-radius: var(--border-radius);
+      color: var(--text-light);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .upload-btn:hover {
+      background: rgba(255,255,255,0.2);
+      border-color: var(--primary-color);
+    }
+
+    .submit-btn {
+      padding: 12px;
+      border: none;
+      border-radius: 50px;
+      background: var(--button-gradient);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(106, 17, 203, 0.3);
+    }
+
+    .submit-btn:hover {
+      background: var(--button-hover-gradient);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(106, 17, 203, 0.4);
+    }
+
+    .submit-btn:disabled {
+      background: rgba(106, 17, 203, 0.5);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Modal de éxito */
+    .success-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 1100;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .success-modal-content {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 30px;
+      text-align: center;
+      max-width: 300px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .success-modal i {
+      font-size: 50px;
+      color: var(--success-color);
+      margin-bottom: 20px;
+    }
+
+    .success-modal h3 {
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+
+    .success-modal p {
+      color: var(--text-gray);
+      margin-bottom: 20px;
+    }
+
+    .success-modal-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 50px;
+      background: var(--button-gradient);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .success-modal-btn:hover {
+      background: var(--button-hover-gradient);
+      transform: translateY(-2px);
     }
 
     /* Media queries para tablets */
@@ -1016,135 +1370,10 @@
         max-width: 700px;
       }
     }
-
-    /* Nuevos estilos para el formulario de publicación */
-    .create-post-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.9);
-      z-index: 1000;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .create-post-content {
-      max-width: 500px;
-      width: 90%;
-      margin: 20px auto;
-      background: var(--card-bg);
-      border-radius: var(--border-radius);
-      padding: 20px;
-      color: white;
-    }
-
-    .create-post-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .create-post-title {
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .create-post-close {
-      font-size: 24px;
-      cursor: pointer;
-    }
-
-    .create-post-form {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .form-label {
-      font-size: 14px;
-      color: var(--text-gray);
-    }
-
-    .form-input, .form-textarea, .form-select {
-      padding: 10px 15px;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: var(--border-radius);
-      background: rgba(255,255,255,0.05);
-      color: var(--text-light);
-      font-size: 14px;
-    }
-
-    .form-textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
-
-    .media-preview {
-      width: 100%;
-      max-height: 300px;
-      object-fit: contain;
-      border-radius: var(--border-radius);
-      display: none;
-    }
-
-    .video-preview {
-      width: 100%;
-      max-height: 300px;
-      border-radius: var(--border-radius);
-      display: none;
-    }
-
-    .upload-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 10px 15px;
-      background: rgba(255,255,255,0.1);
-      border: 1px dashed rgba(255,255,255,0.3);
-      border-radius: var(--border-radius);
-      color: var(--text-light);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .upload-btn:hover {
-      background: rgba(255,255,255,0.2);
-    }
-
-    .submit-btn {
-      padding: 12px;
-      border: none;
-      border-radius: var(--border-radius);
-      background: var(--primary-color);
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    .submit-btn:hover {
-      background: var(--primary-dark);
-    }
-
-    .submit-btn:disabled {
-      background: rgba(254, 44, 85, 0.5);
-      cursor: not-allowed;
-    }
   </style>
 </head>
 <body>
-  <!-- Header -->
+  <!-- Header simplificado -->
   <header class="app-header">
     <div class="logo-container">
       <img src="logo.png" alt="Logo" class="logo-img">
@@ -1152,19 +1381,9 @@
     </div>
     
     <div class="search-container">
-      <i class="fas fa-search search-icon" onclick="toggleSearch()"></i>
+      <i class="fas fa-search search-icon"></i>
       <input type="text" class="search-input" placeholder="Buscar usuarios..." oninput="searchUsers(this.value)">
       <div class="search-results" id="searchResults"></div>
-    </div>
-
-    <div class="header-actions">
-      <a href="configuracion.html" class="action-btn">
-        <i class="fas fa-cog"></i>
-      </a>
-      <a href="#" class="action-btn" id="notificationsBtn" onclick="showSection('notificationsSection')">
-        <i class="fas fa-bell"></i>
-        <div class="notification-badge" id="notificationBadge" style="display: none;">0</div>
-      </a>
     </div>
   </header>
 
@@ -1201,19 +1420,6 @@
           <div class="empty-state">
             <i class="fas fa-clock"></i>
             <p>Tu historial de videos aparecerá aquí</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Sección Siguiendo -->
-      <div class="section" id="followingSection">
-        <div class="header">
-          <h1 class="page-title">Usuarios que sigues</h1>
-        </div>
-        <div class="posts-container" id="followingContainer">
-          <div class="empty-state">
-            <i class="fas fa-users"></i>
-            <p>Las publicaciones de los usuarios que sigues aparecerán aquí</p>
           </div>
         </div>
       </div>
@@ -1281,7 +1487,7 @@
     </div>
   </div>
 
-  <!-- Menú inferior -->
+  <!-- Menú inferior actualizado -->
   <nav class="bottom-menu">
     <a href="#" class="menu-item" onclick="showSection('homeSection')">
       <i class="fas fa-home"></i>
@@ -1294,14 +1500,14 @@
     <a href="#" class="menu-item home" onclick="showCreatePostModal()">
       <i class="fas fa-plus"></i>
     </a>
-    <a href="#" class="menu-item" onclick="showSection('followingSection')">
-      <i class="fas fa-users"></i>
-      <span>Siguiendo</span>
-    </a>
-    <a href="#" class="menu-item" onclick="showSection('notificationsSection')" id="notificationsMenuItem">
+    <a href="notificacion.html" class="menu-item" id="notificationsMenuItem">
       <i class="fas fa-bell"></i>
       <span>Notificaciones</span>
       <div class="notification-badge" id="notificationBadge" style="display: none;">0</div>
+    </a>
+    <a href="configuracion.html" class="menu-item">
+      <i class="fas fa-cog"></i>
+      <span>Configuración</span>
     </a>
   </nav>
 
@@ -1411,6 +1617,16 @@
     </div>
   </div>
 
+  <!-- Modal de éxito -->
+  <div class="success-modal" id="successModal">
+    <div class="success-modal-content">
+      <i class="fas fa-check-circle"></i>
+      <h3>¡Publicación exitosa!</h3>
+      <p>Tu publicación ha sido subida correctamente.</p>
+      <button class="success-modal-btn" onclick="closeSuccessModal()">Aceptar</button>
+    </div>
+  </div>
+
   <!-- Notificación -->
   <div class="notification" id="notification">
     <i class="fas fa-check-circle"></i>
@@ -1470,6 +1686,7 @@
     let notificationPosts = [];
     let viewedVideos = new Set();
     let selectedFile = null;
+    let currentlyPlayingVideo = null;
 
     // Inicializar la aplicación
     document.addEventListener('DOMContentLoaded', () => {
@@ -1589,6 +1806,9 @@
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publicando...';
       
       try {
+        // Mostrar loading spinner
+        document.getElementById('loadingSpinner').style.display = 'block';
+        
         // Subir archivo a Firebase Storage
         const fileExtension = selectedFile.name.split('.').pop();
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExtension}`;
@@ -1613,10 +1833,10 @@
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         };
         
-        await db.collection(collectionName).add(newPost);
+        const postRef = await db.collection(collectionName).add(newPost);
         
-        // Mostrar notificación de éxito
-        showNotification('Publicación creada exitosamente', 'success');
+        // Mostrar modal de éxito
+        showSuccessModal();
         
         // Cerrar modal y resetear formulario
         closeCreatePostModal();
@@ -1625,14 +1845,26 @@
         loadAllPosts();
         
         // Enviar notificación a seguidores
-        sendNotificationToFollowers(newPost, postType);
+        sendNotificationToFollowers({...newPost, id: postRef.id}, postType);
         
       } catch (error) {
         console.error("Error al crear publicación:", error);
         showNotification('Error al crear publicación', 'error');
+      } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Publicar';
+        document.getElementById('loadingSpinner').style.display = 'none';
       }
+    }
+    
+    // Mostrar modal de éxito
+    function showSuccessModal() {
+      document.getElementById('successModal').style.display = 'flex';
+    }
+    
+    // Cerrar modal de éxito
+    function closeSuccessModal() {
+      document.getElementById('successModal').style.display = 'none';
     }
     
     // Enviar notificación a seguidores
@@ -1663,13 +1895,16 @@
             userId: currentUser.uid,
             title: post.title,
             message: `${currentUser.displayName || 'Un usuario'} ha publicado nuevo contenido`,
+            mediaUrl: post.mediaUrl,
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), // Expira en 24 horas
             read: false
           });
         });
         
         await batch.commit();
+        
+        // Actualizar contador de notificaciones
+        loadNewNotifications();
         
       } catch (error) {
         console.error("Error al enviar notificaciones:", error);
@@ -1690,19 +1925,15 @@
       document.querySelectorAll('.menu-item').forEach(item => {
         item.classList.remove('active');
       });
-      event.currentTarget.classList.add('active');
+      
+      // Pausar cualquier video que se esté reproduciendo
+      pauseAllVideos();
       
       // Cargar contenido específico de la sección
-      switch(sectionId) {
-        case 'historySection':
-          loadHistory();
-          break;
-        case 'followingSection':
-          loadFollowingPosts();
-          break;
-        case 'notificationsSection':
-          loadNotifications();
-          break;
+      if (sectionId === 'historySection') {
+        loadHistory();
+      } else if (sectionId === 'notificationsSection') {
+        loadNotifications();
       }
     }
 
@@ -1715,201 +1946,6 @@
         }
       } catch (error) {
         console.error("Error al cargar historial:", error);
-      }
-    }
-
-    // Cargar posts que el usuario ha dado like
-    async function loadLikedPosts() {
-      try {
-        // Limpiar el set de likes
-        likedPosts = new Set();
-        
-        // Obtener likes de todas las colecciones
-        const [gallosLikes, entrenamientosLikes, peleasLikes] = await Promise.all([
-          db.collection('PublicGallo').where('likes', 'array-contains', currentUser.uid).get(),
-          db.collection('PublicEntrenamiento').where('likes', 'array-contains', currentUser.uid).get(),
-          db.collection('PublicPelea').where('likes', 'array-contains', currentUser.uid).get()
-        ]);
-        
-        // Agregar IDs de posts con like
-        gallosLikes.forEach(doc => likedPosts.add(`gallos_${doc.id}`));
-        entrenamientosLikes.forEach(doc => likedPosts.add(`entrenamientos_${doc.id}`));
-        peleasLikes.forEach(doc => likedPosts.add(`peleas_${doc.id}`));
-        
-      } catch (error) {
-        console.error("Error al cargar posts con like:", error);
-      }
-    }
-
-    // Cargar notificaciones nuevas
-    async function loadNewNotifications() {
-      try {
-        const now = new Date();
-        const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-        
-        const notificationsSnapshot = await db.collection('notifications')
-          .doc(currentUser.uid)
-          .collection('userNotifications')
-          .where('timestamp', '>=', twentyFourHoursAgo)
-          .where('read', '==', false)
-          .get();
-        
-        newNotifications = notificationsSnapshot.size;
-        
-        // Actualizar badge de notificaciones
-        const badge = document.getElementById('notificationBadge');
-        if (newNotifications > 0) {
-          badge.textContent = newNotifications;
-          badge.style.display = 'flex';
-        } else {
-          badge.style.display = 'none';
-        }
-        
-      } catch (error) {
-        console.error("Error al cargar notificaciones:", error);
-      }
-    }
-
-    // Cargar notificaciones
-    async function loadNotifications() {
-      const container = document.getElementById('notificationsContainer');
-      
-      try {
-        const now = new Date();
-        const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-        
-        const notificationsSnapshot = await db.collection('notifications')
-          .doc(currentUser.uid)
-          .collection('userNotifications')
-          .where('timestamp', '>=', twentyFourHoursAgo)
-          .orderBy('timestamp', 'desc')
-          .get();
-        
-        if (notificationsSnapshot.empty) {
-          container.innerHTML = `
-            <div class="empty-state">
-              <i class="fas fa-bell-slash"></i>
-              <p>No hay notificaciones nuevas</p>
-            </div>
-          `;
-          return;
-        }
-        
-        container.innerHTML = '';
-        
-        // Procesar cada notificación
-        for (const doc of notificationsSnapshot.docs) {
-          const notification = doc.data();
-          
-          // Obtener datos del usuario que generó la notificación
-          let userData = userCache[notification.userId];
-          if (!userData) {
-            const userDoc = await db.collection('users').doc(notification.userId).get();
-            if (userDoc.exists) {
-              userData = userDoc.data();
-              userCache[notification.userId] = userData;
-            } else {
-              userData = {
-                displayName: 'Usuario',
-                photoURL: 'img/default-profile.jpg',
-                email: ''
-              };
-            }
-          }
-          
-          // Formatear fecha
-          let notificationDate = 'Fecha no disponible';
-          if (notification.timestamp && notification.timestamp.toDate) {
-            try {
-              notificationDate = notification.timestamp.toDate().toLocaleDateString('es-ES', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              });
-            } catch (error) {
-              console.error("Error al formatear fecha:", error);
-            }
-          }
-          
-          // Crear elemento de notificación
-          const notificationElement = document.createElement('div');
-          notificationElement.className = 'post-card';
-          notificationElement.innerHTML = `
-            <div class="post-header">
-              <img src="${userData.photoURL}" alt="Avatar" class="user-avatar" 
-                   onclick="viewUserProfile('${notification.userId}')">
-              <div class="user-info">
-                <div class="user-name" onclick="viewUserProfile('${notification.userId}')">${userData.displayName}</div>
-                <div class="post-time">${notificationDate}</div>
-              </div>
-              ${notification.userId !== currentUser.uid ? 
-                `<button class="follow-btn" id="followBtn-${notification.userId}" onclick="toggleFollow('${notification.userId}', this)">
-                  <i class="fas fa-user-plus"></i> Seguir
-                </button>` : ''
-              }
-            </div>
-            <div class="post-content">
-              <h3 class="post-title">${notification.message}</h3>
-              <div style="margin-top: 10px;">
-                <button class="filter-btn" onclick="viewNotificationPost('${notification.postType}', '${notification.postId}')">
-                  Ver publicación
-                </button>
-              </div>
-            </div>
-          `;
-          
-          container.appendChild(notificationElement);
-          
-          // Configurar estado del botón de seguir
-          if (notification.userId !== currentUser.uid) {
-            setupFollowButton(notification.userId);
-          }
-          
-          // Marcar como leída
-          if (!notification.read) {
-            await db.collection('notifications')
-              .doc(currentUser.uid)
-              .collection('userNotifications')
-              .doc(doc.id)
-              .update({
-                read: true
-              });
-          }
-        }
-        
-        // Resetear notificaciones
-        newNotifications = 0;
-        document.getElementById('notificationBadge').style.display = 'none';
-        
-      } catch (error) {
-        console.error("Error al cargar notificaciones:", error);
-        container.innerHTML = `
-          <div class="empty-state">
-            <i class="fas fa-exclamation-triangle"></i>
-            <p>Error al cargar notificaciones</p>
-          </div>
-        `;
-      }
-    }
-    
-    // Ver publicación desde notificación
-    async function viewNotificationPost(postType, postId) {
-      try {
-        const collectionName = getCollectionName(postType);
-        const postDoc = await db.collection(collectionName).doc(postId).get();
-        
-        if (postDoc.exists) {
-          const post = {...postDoc.data(), id: postDoc.id, type: postType};
-          showPostModal(post);
-          showSection('homeSection');
-        } else {
-          showNotification('La publicación ya no está disponible', 'error');
-        }
-      } catch (error) {
-        console.error("Error al cargar publicación:", error);
-        showNotification('Error al cargar publicación', 'error');
       }
     }
 
@@ -2053,87 +2089,88 @@
       }
     }
 
-    // Cargar publicaciones de usuarios seguidos
-    async function loadFollowingPosts() {
-      const container = document.getElementById('followingContainer');
-      
+    // Cargar posts que el usuario ha dado like
+    async function loadLikedPosts() {
       try {
-        // Obtener lista de usuarios seguidos
-        const followingSnapshot = await db.collection('followers')
-          .doc(currentUser.uid)
-          .collection('userFollowing')
-          .get();
+        // Limpiar el set de likes
+        likedPosts = new Set();
         
-        if (followingSnapshot.empty) {
-          container.innerHTML = `
-            <div class="empty-state">
-              <i class="fas fa-user-plus"></i>
-              <p>No sigues a ningún usuario todavía</p>
-            </div>
-          `;
-          return;
-        }
-        
-        const followingIds = followingSnapshot.docs.map(doc => doc.id);
-        
-        // Obtener publicaciones de usuarios seguidos
-        const [gallosPosts, entrenamientosPosts, peleasPosts] = await Promise.all([
-          db.collection('PublicGallo')
-            .where('userId', 'in', followingIds)
-            .orderBy('timestamp', 'desc')
-            .get(),
-          db.collection('PublicEntrenamiento')
-            .where('userId', 'in', followingIds)
-            .orderBy('timestamp', 'desc')
-            .get(),
-          db.collection('PublicPelea')
-            .where('userId', 'in', followingIds)
-            .orderBy('timestamp', 'desc')
-            .get()
+        // Obtener likes de todas las colecciones
+        const [gallosLikes, entrenamientosLikes, peleasLikes] = await Promise.all([
+          db.collection('PublicGallo').where('likes', 'array-contains', currentUser.uid).get(),
+          db.collection('PublicEntrenamiento').where('likes', 'array-contains', currentUser.uid).get(),
+          db.collection('PublicPelea').where('likes', 'array-contains', currentUser.uid).get()
         ]);
         
-        const followingPosts = [];
+        // Agregar IDs de posts con like
+        gallosLikes.forEach(doc => likedPosts.add(`gallos_${doc.id}`));
+        entrenamientosLikes.forEach(doc => likedPosts.add(`entrenamientos_${doc.id}`));
+        peleasLikes.forEach(doc => likedPosts.add(`peleas_${doc.id}`));
         
-        gallosPosts.forEach(doc => {
-          followingPosts.push({...doc.data(), id: doc.id, type: 'gallos'});
-        });
+      } catch (error) {
+        console.error("Error al cargar posts con like:", error);
+      }
+    }
+
+    // Cargar notificaciones nuevas
+    async function loadNewNotifications() {
+      try {
+        const notificationsSnapshot = await db.collection('notifications')
+          .doc(currentUser.uid)
+          .collection('userNotifications')
+          .where('read', '==', false)
+          .get();
         
-        entrenamientosPosts.forEach(doc => {
-          followingPosts.push({...doc.data(), id: doc.id, type: 'entrenamientos'});
-        });
+        newNotifications = notificationsSnapshot.size;
         
-        peleasPosts.forEach(doc => {
-          followingPosts.push({...doc.data(), id: doc.id, type: 'peleas'});
-        });
+        // Actualizar badge de notificaciones
+        const badge = document.getElementById('notificationBadge');
+        if (newNotifications > 0) {
+          badge.textContent = newNotifications;
+          badge.style.display = 'flex';
+        } else {
+          badge.style.display = 'none';
+        }
         
-        if (followingPosts.length === 0) {
+      } catch (error) {
+        console.error("Error al cargar notificaciones:", error);
+      }
+    }
+
+    // Cargar notificaciones
+    async function loadNotifications() {
+      const container = document.getElementById('notificationsContainer');
+      
+      try {
+        const notificationsSnapshot = await db.collection('notifications')
+          .doc(currentUser.uid)
+          .collection('userNotifications')
+          .orderBy('timestamp', 'desc')
+          .get();
+        
+        if (notificationsSnapshot.empty) {
           container.innerHTML = `
             <div class="empty-state">
-              <i class="fas fa-box-open"></i>
-              <p>Los usuarios que sigues no han publicado nada todavía</p>
+              <i class="fas fa-bell-slash"></i>
+              <p>No hay notificaciones nuevas</p>
             </div>
           `;
           return;
         }
-        
-        // Ordenar por fecha (más reciente primero)
-        followingPosts.sort((a, b) => {
-          const dateA = a.timestamp?.toDate() || new Date(0);
-          const dateB = b.timestamp?.toDate() || new Date(0);
-          return dateB - dateA;
-        });
         
         container.innerHTML = '';
         
-        // Mostrar publicaciones de usuarios seguidos
-        for (const post of followingPosts) {
-          // Obtener datos del usuario desde caché o Firestore
-          let userData = userCache[post.userId];
+        // Procesar cada notificación
+        for (const doc of notificationsSnapshot.docs) {
+          const notification = doc.data();
+          
+          // Obtener datos del usuario que generó la notificación
+          let userData = userCache[notification.userId];
           if (!userData) {
-            const userDoc = await db.collection('users').doc(post.userId).get();
+            const userDoc = await db.collection('users').doc(notification.userId).get();
             if (userDoc.exists) {
               userData = userDoc.data();
-              userCache[post.userId] = userData;
+              userCache[notification.userId] = userData;
             } else {
               userData = {
                 displayName: 'Usuario',
@@ -2144,10 +2181,10 @@
           }
           
           // Formatear fecha
-          let postDate = 'Fecha no disponible';
-          if (post.timestamp && post.timestamp.toDate) {
+          let notificationDate = 'Fecha no disponible';
+          if (notification.timestamp && notification.timestamp.toDate) {
             try {
-              postDate = post.timestamp.toDate().toLocaleDateString('es-ES', {
+              notificationDate = notification.timestamp.toDate().toLocaleDateString('es-ES', {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric',
@@ -2159,97 +2196,85 @@
             }
           }
           
-          // Determinar si el usuario actual dio like a esta publicación
-          const hasLike = likedPosts.has(`${post.type}_${post.id}`);
+          // Crear elemento de notificación
+          const notificationElement = document.createElement('div');
+          notificationElement.className = `notification-item ${notification.read ? '' : 'notification-unread'}`;
+          notificationElement.onclick = () => viewNotificationPost(notification.postType, notification.postId);
           
-          // Determinar el contenido multimedia según el tipo
+          // Contenido multimedia para la notificación
           let mediaContent = '';
-          if (post.type === 'gallos') {
-            mediaContent = `
-              <div class="post-media-container">
-                <img src="${post.mediaUrl}" alt="${post.title}" class="post-image" 
-                     onclick="expandImage('${post.mediaUrl}')" 
-                     onerror="this.onerror=null;this.src='img/default-image.jpg'">
-              </div>
-            `;
-          } else {
-            // Determinar si es un video short (vertical) o normal (horizontal)
-            const isShort = await isVideoShort(post.mediaUrl);
-            
-            mediaContent = `
-              <div class="post-media-container">
-                <div class="video-container ${isShort ? 'short' : 'normal'}">
-                  <video controls playsinline>
-                    <source src="${post.mediaUrl}" type="video/mp4">
-                    Tu navegador no soporta videos HTML5.
+          if (notification.mediaUrl) {
+            if (notification.mediaUrl.includes('.mp4')) {
+              mediaContent = `
+                <div class="notification-media">
+                  <video muted playsinline>
+                    <source src="${notification.mediaUrl}" type="video/mp4">
                   </video>
                 </div>
-              </div>
-            `;
+              `;
+            } else {
+              mediaContent = `
+                <div class="notification-media">
+                  <img src="${notification.mediaUrl}" onerror="this.onerror=null;this.src='img/default-image.jpg'">
+                </div>
+              `;
+            }
           }
           
-          // Crear elemento de publicación
-          const postElement = document.createElement('div');
-          postElement.className = 'post-card';
-          postElement.innerHTML = `
-            <div class="post-header">
-              <img src="${userData.photoURL}" alt="Avatar" class="user-avatar" 
-                   onclick="viewUserProfile('${post.userId}')">
-              <div class="user-info">
-                <div class="user-name" onclick="viewUserProfile('${post.userId}')">${userData.displayName}</div>
-                <div class="post-time">${postDate}</div>
-              </div>
-              ${post.userId !== currentUser.uid ? 
-                `<button class="follow-btn" id="followBtn-${post.userId}" onclick="toggleFollow('${post.userId}', this)">
-                  <i class="fas fa-user-plus"></i> Seguir
-                </button>` : ''
-              }
-            </div>
-            <div class="post-content">
-              <h3 class="post-title">${post.title || 'Sin título'}</h3>
-              <p class="post-description">${post.description || 'Sin descripción'}</p>
-              ${mediaContent}
-            </div>
-            <div class="post-footer">
-              <div class="post-actions">
-                <button class="action-btn" onclick="toggleLike('${post.type}', '${post.id}', this)">
-                  <i class="fas fa-heart ${hasLike ? 'liked' : ''}"></i> Me gusta
-                </button>
-                <button class="action-btn" onclick="toggleComments('${post.type}', '${post.id}', this)">
-                  <i class="fas fa-comment"></i> Comentar
-                </button>
-              </div>
-              <div class="post-stats">
-                <span><i class="fas fa-heart"></i> ${post.likes?.length || 0} likes</span>
-                <span style="margin-left: 10px;"><i class="fas fa-comment"></i> ${post.comments || 0} comentarios</span>
-              </div>
-            </div>
-            <div class="comments-section" id="comments-${post.id}">
-              <div class="comments-list" id="commentsList-${post.id}">
-                <!-- Los comentarios se cargarán aquí -->
-              </div>
-              <form class="comment-form" onsubmit="postComment('${post.type}', '${post.id}', event)">
-                <input type="text" class="comment-input" placeholder="Escribe un comentario..." required>
-                <button type="submit" class="comment-submit">Publicar</button>
-              </form>
+          notificationElement.innerHTML = `
+            ${mediaContent}
+            <div class="notification-content">
+              <div class="notification-title">${notification.message}</div>
+              <div class="notification-description">${notification.title || ''}</div>
+              <div class="notification-time">${notificationDate}</div>
             </div>
           `;
           
-          container.appendChild(postElement);
+          container.appendChild(notificationElement);
           
-          // Configurar estado del botón de seguir
-          if (post.userId !== currentUser.uid) {
-            setupFollowButton(post.userId);
+          // Marcar como leída
+          if (!notification.read) {
+            await db.collection('notifications')
+              .doc(currentUser.uid)
+              .collection('userNotifications')
+              .doc(doc.id)
+              .update({
+                read: true
+              });
           }
         }
+        
+        // Resetear notificaciones
+        newNotifications = 0;
+        document.getElementById('notificationBadge').style.display = 'none';
+        
       } catch (error) {
-        console.error("Error al cargar publicaciones de seguidos:", error);
+        console.error("Error al cargar notificaciones:", error);
         container.innerHTML = `
           <div class="empty-state">
             <i class="fas fa-exclamation-triangle"></i>
-            <p>Error al cargar publicaciones</p>
+            <p>Error al cargar notificaciones</p>
           </div>
         `;
+      }
+    }
+    
+    // Ver publicación desde notificación
+    async function viewNotificationPost(postType, postId) {
+      try {
+        const collectionName = getCollectionName(postType);
+        const postDoc = await db.collection(collectionName).doc(postId).get();
+        
+        if (postDoc.exists) {
+          const post = {...postDoc.data(), id: postDoc.id, type: postType};
+          showPostModal(post);
+          showSection('homeSection');
+        } else {
+          showNotification('La publicación ya no está disponible', 'error');
+        }
+      } catch (error) {
+        console.error("Error al cargar publicación:", error);
+        showNotification('Error al cargar publicación', 'error');
       }
     }
 
@@ -2430,20 +2455,7 @@
       }
     }
 
-    // Alternar búsqueda
-    function toggleSearch() {
-      const searchInput = document.querySelector('.search-input');
-      const searchResults = document.getElementById('searchResults');
-      
-      searchInput.classList.toggle('active');
-      searchResults.classList.remove('active');
-      
-      if (searchInput.classList.contains('active')) {
-        searchInput.focus();
-      }
-    }
-
-    // Buscar usuarios con filtrado en tiempo real
+    // Buscar usuarios con coincidencias en tiempo real
     async function searchUsers(query) {
       const searchResults = document.getElementById('searchResults');
       
@@ -2454,18 +2466,7 @@
       }
       
       try {
-        // Primero buscar en caché
-        const cachedResults = Object.values(userCache).filter(user => 
-          user.displayName.toLowerCase().includes(query.toLowerCase()) || 
-          user.email.toLowerCase().includes(query.toLowerCase())
-        );
-        
-        if (cachedResults.length > 0) {
-          displaySearchResults(cachedResults, searchResults);
-          return;
-        }
-        
-        // Si no hay resultados en caché, buscar en Firestore
+        // Buscar en Firestore usando consultas de coincidencia
         const usersSnapshot = await db.collection('users')
           .where('keywords', 'array-contains', query.toLowerCase())
           .limit(10)
@@ -2512,7 +2513,7 @@
           `;
           item.onclick = () => {
             viewUserProfile(user.id);
-            document.querySelector('.search-input').classList.remove('active');
+            document.querySelector('.search-input').value = '';
             searchResults.classList.remove('active');
           };
           searchResults.appendChild(item);
@@ -2528,12 +2529,30 @@
         // Reproducir/pausar al hacer clic en el video
         if (e.target.tagName === 'VIDEO') {
           const video = e.target;
+          
+          // Pausar cualquier video que se esté reproduciendo
+          if (currentlyPlayingVideo && currentlyPlayingVideo !== video) {
+            currentlyPlayingVideo.pause();
+            currentlyPlayingVideo = null;
+          }
+          
           if (video.paused) {
-            video.play().catch(err => {
-              console.error("Error al reproducir video:", err);
-            });
+            video.play()
+              .then(() => {
+                currentlyPlayingVideo = video;
+                // Registrar como visto cuando se reproduce
+                const postId = video.closest('.post-card')?.getAttribute('data-post-id');
+                const postType = video.closest('.post-card')?.getAttribute('data-post-type');
+                if (postId && postType) {
+                  addToHistory(postType, postId);
+                }
+              })
+              .catch(err => {
+                console.error("Error al reproducir video:", err);
+              });
           } else {
             video.pause();
+            currentlyPlayingVideo = null;
           }
         }
         
@@ -2548,6 +2567,14 @@
           }
         }
       });
+    }
+
+    // Pausar todos los videos
+    function pauseAllVideos() {
+      document.querySelectorAll('video').forEach(video => {
+        video.pause();
+      });
+      currentlyPlayingVideo = null;
     }
 
     // Alternar pantalla completa
@@ -2703,6 +2730,8 @@
         // Crear elemento de publicación
         const postElement = document.createElement('div');
         postElement.className = 'post-card';
+        postElement.setAttribute('data-post-id', post.id);
+        postElement.setAttribute('data-post-type', post.type);
         postElement.innerHTML = `
           <div class="post-header">
             <img src="${userData.photoURL}" alt="Avatar" class="user-avatar" 
@@ -2767,8 +2796,20 @@
           });
           
           video.addEventListener('play', () => {
+            // Pausar cualquier otro video que se esté reproduciendo
+            if (currentlyPlayingVideo && currentlyPlayingVideo !== video) {
+              currentlyPlayingVideo.pause();
+            }
+            currentlyPlayingVideo = video;
+            
             // Registrar como visto cuando se reproduce
             addToHistory(post.type, post.id);
+          });
+          
+          video.addEventListener('pause', () => {
+            if (currentlyPlayingVideo === video) {
+              currentlyPlayingVideo = null;
+            }
           });
         }
       }
@@ -2881,6 +2922,12 @@
           
           // Registrar como visto
           addToHistory(post.type, post.id);
+          
+          // Pausar cualquier otro video que se esté reproduciendo
+          if (currentlyPlayingVideo && currentlyPlayingVideo !== video) {
+            currentlyPlayingVideo.pause();
+          }
+          currentlyPlayingVideo = video;
         }, 300);
       }
     }
@@ -2894,6 +2941,10 @@
       const video = document.getElementById('postModalVideo');
       if (video) {
         video.pause();
+      }
+      
+      if (currentlyPlayingVideo === video) {
+        currentlyPlayingVideo = null;
       }
       
       currentModalPost = null;
