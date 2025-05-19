@@ -1141,113 +1141,10 @@
       background: rgba(254, 44, 85, 0.5);
       cursor: not-allowed;
     }
-
-    /* Nuevos estilos futuristas */
-    .futuristic-card {
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: var(--border-radius);
-      background: linear-gradient(145deg, #1e1e1e, #2a2a2a);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      transition: all 0.3s ease;
-      overflow: hidden;
-    }
-
-    .futuristic-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-    }
-
-    .futuristic-btn {
-      background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
-      border: none;
-      border-radius: 50px;
-      padding: 10px 20px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(254, 44, 85, 0.3);
-    }
-
-    .futuristic-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(254, 44, 85, 0.4);
-    }
-
-    .glow-effect {
-      position: relative;
-    }
-
-    .glow-effect::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      border-radius: inherit;
-      box-shadow: 0 0 10px rgba(37, 244, 238, 0.5);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .glow-effect:hover::after {
-      opacity: 1;
-    }
-
-    /* Estilos para notificaciones */
-    .notification-item {
-      display: flex;
-      gap: 15px;
-      padding: 15px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      transition: background 0.3s ease;
-    }
-
-    .notification-item:hover {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .notification-media {
-      width: 80px;
-      height: 80px;
-      border-radius: 8px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-
-    .notification-media img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .notification-content {
-      flex: 1;
-    }
-
-    .notification-title {
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-
-    .notification-time {
-      font-size: 12px;
-      color: var(--text-gray);
-      margin-top: 5px;
-    }
-
-    .notification-unread {
-      background: rgba(254, 44, 85, 0.1);
-    }
-
-    .notification-unread .notification-title {
-      color: var(--primary-color);
-    }
   </style>
 </head>
 <body>
-  <!-- Header simplificado -->
+  <!-- Header -->
   <header class="app-header">
     <div class="logo-container">
       <img src="logo.png" alt="Logo" class="logo-img">
@@ -1258,6 +1155,16 @@
       <i class="fas fa-search search-icon" onclick="toggleSearch()"></i>
       <input type="text" class="search-input" placeholder="Buscar usuarios..." oninput="searchUsers(this.value)">
       <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <div class="header-actions">
+      <a href="configuracion.html" class="action-btn">
+        <i class="fas fa-cog"></i>
+      </a>
+      <a href="#" class="action-btn" id="notificationsBtn" onclick="showSection('notificationsSection')">
+        <i class="fas fa-bell"></i>
+        <div class="notification-badge" id="notificationBadge" style="display: none;">0</div>
+      </a>
     </div>
   </header>
 
@@ -1294,6 +1201,19 @@
           <div class="empty-state">
             <i class="fas fa-clock"></i>
             <p>Tu historial de videos aparecerá aquí</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección Siguiendo -->
+      <div class="section" id="followingSection">
+        <div class="header">
+          <h1 class="page-title">Usuarios que sigues</h1>
+        </div>
+        <div class="posts-container" id="followingContainer">
+          <div class="empty-state">
+            <i class="fas fa-users"></i>
+            <p>Las publicaciones de los usuarios que sigues aparecerán aquí</p>
           </div>
         </div>
       </div>
@@ -1361,7 +1281,7 @@
     </div>
   </div>
 
-  <!-- Menú inferior actualizado -->
+  <!-- Menú inferior -->
   <nav class="bottom-menu">
     <a href="#" class="menu-item" onclick="showSection('homeSection')">
       <i class="fas fa-home"></i>
@@ -1374,14 +1294,14 @@
     <a href="#" class="menu-item home" onclick="showCreatePostModal()">
       <i class="fas fa-plus"></i>
     </a>
+    <a href="#" class="menu-item" onclick="showSection('followingSection')">
+      <i class="fas fa-users"></i>
+      <span>Siguiendo</span>
+    </a>
     <a href="#" class="menu-item" onclick="showSection('notificationsSection')" id="notificationsMenuItem">
       <i class="fas fa-bell"></i>
       <span>Notificaciones</span>
       <div class="notification-badge" id="notificationBadge" style="display: none;">0</div>
-    </a>
-    <a href="configuracion.html" class="menu-item">
-      <i class="fas fa-cog"></i>
-      <span>Configuración</span>
     </a>
   </nav>
 
@@ -1550,7 +1470,6 @@
     let notificationPosts = [];
     let viewedVideos = new Set();
     let selectedFile = null;
-    let currentlyPlayingVideo = null;
 
     // Inicializar la aplicación
     document.addEventListener('DOMContentLoaded', () => {
@@ -1670,9 +1589,6 @@
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publicando...';
       
       try {
-        // Mostrar loading spinner
-        document.getElementById('loadingSpinner').style.display = 'block';
-        
         // Subir archivo a Firebase Storage
         const fileExtension = selectedFile.name.split('.').pop();
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExtension}`;
@@ -1697,7 +1613,7 @@
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         };
         
-        const postRef = await db.collection(collectionName).add(newPost);
+        await db.collection(collectionName).add(newPost);
         
         // Mostrar notificación de éxito
         showNotification('Publicación creada exitosamente', 'success');
@@ -1709,15 +1625,13 @@
         loadAllPosts();
         
         // Enviar notificación a seguidores
-        sendNotificationToFollowers({...newPost, id: postRef.id}, postType);
+        sendNotificationToFollowers(newPost, postType);
         
       } catch (error) {
         console.error("Error al crear publicación:", error);
         showNotification('Error al crear publicación', 'error');
-      } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Publicar';
-        document.getElementById('loadingSpinner').style.display = 'none';
       }
     }
     
@@ -1749,16 +1663,13 @@
             userId: currentUser.uid,
             title: post.title,
             message: `${currentUser.displayName || 'Un usuario'} ha publicado nuevo contenido`,
-            mediaUrl: post.mediaUrl,
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), // Expira en 24 horas
             read: false
           });
         });
         
         await batch.commit();
-        
-        // Actualizar contador de notificaciones
-        loadNewNotifications();
         
       } catch (error) {
         console.error("Error al enviar notificaciones:", error);
@@ -1786,13 +1697,13 @@
         case 'historySection':
           loadHistory();
           break;
+        case 'followingSection':
+          loadFollowingPosts();
+          break;
         case 'notificationsSection':
           loadNotifications();
           break;
       }
-      
-      // Pausar cualquier video que se esté reproduciendo
-      pauseAllVideos();
     }
 
     // Cargar videos vistos (historial)
@@ -1833,9 +1744,13 @@
     // Cargar notificaciones nuevas
     async function loadNewNotifications() {
       try {
+        const now = new Date();
+        const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+        
         const notificationsSnapshot = await db.collection('notifications')
           .doc(currentUser.uid)
           .collection('userNotifications')
+          .where('timestamp', '>=', twentyFourHoursAgo)
           .where('read', '==', false)
           .get();
         
@@ -1860,9 +1775,13 @@
       const container = document.getElementById('notificationsContainer');
       
       try {
+        const now = new Date();
+        const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+        
         const notificationsSnapshot = await db.collection('notifications')
           .doc(currentUser.uid)
           .collection('userNotifications')
+          .where('timestamp', '>=', twentyFourHoursAgo)
           .orderBy('timestamp', 'desc')
           .get();
         
@@ -1916,39 +1835,37 @@
           
           // Crear elemento de notificación
           const notificationElement = document.createElement('div');
-          notificationElement.className = `notification-item ${notification.read ? '' : 'notification-unread'}`;
-          notificationElement.onclick = () => viewNotificationPost(notification.postType, notification.postId);
-          
-          // Contenido multimedia para la notificación
-          let mediaContent = '';
-          if (notification.mediaUrl) {
-            if (notification.mediaUrl.includes('.mp4')) {
-              mediaContent = `
-                <div class="notification-media">
-                  <video muted playsinline>
-                    <source src="${notification.mediaUrl}" type="video/mp4">
-                  </video>
-                </div>
-              `;
-            } else {
-              mediaContent = `
-                <div class="notification-media">
-                  <img src="${notification.mediaUrl}" onerror="this.onerror=null;this.src='img/default-image.jpg'">
-                </div>
-              `;
-            }
-          }
-          
+          notificationElement.className = 'post-card';
           notificationElement.innerHTML = `
-            ${mediaContent}
-            <div class="notification-content">
-              <div class="notification-title">${notification.message}</div>
-              <div class="notification-description">${notification.title || ''}</div>
-              <div class="notification-time">${notificationDate}</div>
+            <div class="post-header">
+              <img src="${userData.photoURL}" alt="Avatar" class="user-avatar" 
+                   onclick="viewUserProfile('${notification.userId}')">
+              <div class="user-info">
+                <div class="user-name" onclick="viewUserProfile('${notification.userId}')">${userData.displayName}</div>
+                <div class="post-time">${notificationDate}</div>
+              </div>
+              ${notification.userId !== currentUser.uid ? 
+                `<button class="follow-btn" id="followBtn-${notification.userId}" onclick="toggleFollow('${notification.userId}', this)">
+                  <i class="fas fa-user-plus"></i> Seguir
+                </button>` : ''
+              }
+            </div>
+            <div class="post-content">
+              <h3 class="post-title">${notification.message}</h3>
+              <div style="margin-top: 10px;">
+                <button class="filter-btn" onclick="viewNotificationPost('${notification.postType}', '${notification.postId}')">
+                  Ver publicación
+                </button>
+              </div>
             </div>
           `;
           
           container.appendChild(notificationElement);
+          
+          // Configurar estado del botón de seguir
+          if (notification.userId !== currentUser.uid) {
+            setupFollowButton(notification.userId);
+          }
           
           // Marcar como leída
           if (!notification.read) {
@@ -2133,6 +2050,206 @@
         if (post.userId !== currentUser.uid) {
           setupFollowButton(post.userId);
         }
+      }
+    }
+
+    // Cargar publicaciones de usuarios seguidos
+    async function loadFollowingPosts() {
+      const container = document.getElementById('followingContainer');
+      
+      try {
+        // Obtener lista de usuarios seguidos
+        const followingSnapshot = await db.collection('followers')
+          .doc(currentUser.uid)
+          .collection('userFollowing')
+          .get();
+        
+        if (followingSnapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-user-plus"></i>
+              <p>No sigues a ningún usuario todavía</p>
+            </div>
+          `;
+          return;
+        }
+        
+        const followingIds = followingSnapshot.docs.map(doc => doc.id);
+        
+        // Obtener publicaciones de usuarios seguidos
+        const [gallosPosts, entrenamientosPosts, peleasPosts] = await Promise.all([
+          db.collection('PublicGallo')
+            .where('userId', 'in', followingIds)
+            .orderBy('timestamp', 'desc')
+            .get(),
+          db.collection('PublicEntrenamiento')
+            .where('userId', 'in', followingIds)
+            .orderBy('timestamp', 'desc')
+            .get(),
+          db.collection('PublicPelea')
+            .where('userId', 'in', followingIds)
+            .orderBy('timestamp', 'desc')
+            .get()
+        ]);
+        
+        const followingPosts = [];
+        
+        gallosPosts.forEach(doc => {
+          followingPosts.push({...doc.data(), id: doc.id, type: 'gallos'});
+        });
+        
+        entrenamientosPosts.forEach(doc => {
+          followingPosts.push({...doc.data(), id: doc.id, type: 'entrenamientos'});
+        });
+        
+        peleasPosts.forEach(doc => {
+          followingPosts.push({...doc.data(), id: doc.id, type: 'peleas'});
+        });
+        
+        if (followingPosts.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-box-open"></i>
+              <p>Los usuarios que sigues no han publicado nada todavía</p>
+            </div>
+          `;
+          return;
+        }
+        
+        // Ordenar por fecha (más reciente primero)
+        followingPosts.sort((a, b) => {
+          const dateA = a.timestamp?.toDate() || new Date(0);
+          const dateB = b.timestamp?.toDate() || new Date(0);
+          return dateB - dateA;
+        });
+        
+        container.innerHTML = '';
+        
+        // Mostrar publicaciones de usuarios seguidos
+        for (const post of followingPosts) {
+          // Obtener datos del usuario desde caché o Firestore
+          let userData = userCache[post.userId];
+          if (!userData) {
+            const userDoc = await db.collection('users').doc(post.userId).get();
+            if (userDoc.exists) {
+              userData = userDoc.data();
+              userCache[post.userId] = userData;
+            } else {
+              userData = {
+                displayName: 'Usuario',
+                photoURL: 'img/default-profile.jpg',
+                email: ''
+              };
+            }
+          }
+          
+          // Formatear fecha
+          let postDate = 'Fecha no disponible';
+          if (post.timestamp && post.timestamp.toDate) {
+            try {
+              postDate = post.timestamp.toDate().toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+            } catch (error) {
+              console.error("Error al formatear fecha:", error);
+            }
+          }
+          
+          // Determinar si el usuario actual dio like a esta publicación
+          const hasLike = likedPosts.has(`${post.type}_${post.id}`);
+          
+          // Determinar el contenido multimedia según el tipo
+          let mediaContent = '';
+          if (post.type === 'gallos') {
+            mediaContent = `
+              <div class="post-media-container">
+                <img src="${post.mediaUrl}" alt="${post.title}" class="post-image" 
+                     onclick="expandImage('${post.mediaUrl}')" 
+                     onerror="this.onerror=null;this.src='img/default-image.jpg'">
+              </div>
+            `;
+          } else {
+            // Determinar si es un video short (vertical) o normal (horizontal)
+            const isShort = await isVideoShort(post.mediaUrl);
+            
+            mediaContent = `
+              <div class="post-media-container">
+                <div class="video-container ${isShort ? 'short' : 'normal'}">
+                  <video controls playsinline>
+                    <source src="${post.mediaUrl}" type="video/mp4">
+                    Tu navegador no soporta videos HTML5.
+                  </video>
+                </div>
+              </div>
+            `;
+          }
+          
+          // Crear elemento de publicación
+          const postElement = document.createElement('div');
+          postElement.className = 'post-card';
+          postElement.innerHTML = `
+            <div class="post-header">
+              <img src="${userData.photoURL}" alt="Avatar" class="user-avatar" 
+                   onclick="viewUserProfile('${post.userId}')">
+              <div class="user-info">
+                <div class="user-name" onclick="viewUserProfile('${post.userId}')">${userData.displayName}</div>
+                <div class="post-time">${postDate}</div>
+              </div>
+              ${post.userId !== currentUser.uid ? 
+                `<button class="follow-btn" id="followBtn-${post.userId}" onclick="toggleFollow('${post.userId}', this)">
+                  <i class="fas fa-user-plus"></i> Seguir
+                </button>` : ''
+              }
+            </div>
+            <div class="post-content">
+              <h3 class="post-title">${post.title || 'Sin título'}</h3>
+              <p class="post-description">${post.description || 'Sin descripción'}</p>
+              ${mediaContent}
+            </div>
+            <div class="post-footer">
+              <div class="post-actions">
+                <button class="action-btn" onclick="toggleLike('${post.type}', '${post.id}', this)">
+                  <i class="fas fa-heart ${hasLike ? 'liked' : ''}"></i> Me gusta
+                </button>
+                <button class="action-btn" onclick="toggleComments('${post.type}', '${post.id}', this)">
+                  <i class="fas fa-comment"></i> Comentar
+                </button>
+              </div>
+              <div class="post-stats">
+                <span><i class="fas fa-heart"></i> ${post.likes?.length || 0} likes</span>
+                <span style="margin-left: 10px;"><i class="fas fa-comment"></i> ${post.comments || 0} comentarios</span>
+              </div>
+            </div>
+            <div class="comments-section" id="comments-${post.id}">
+              <div class="comments-list" id="commentsList-${post.id}">
+                <!-- Los comentarios se cargarán aquí -->
+              </div>
+              <form class="comment-form" onsubmit="postComment('${post.type}', '${post.id}', event)">
+                <input type="text" class="comment-input" placeholder="Escribe un comentario..." required>
+                <button type="submit" class="comment-submit">Publicar</button>
+              </form>
+            </div>
+          `;
+          
+          container.appendChild(postElement);
+          
+          // Configurar estado del botón de seguir
+          if (post.userId !== currentUser.uid) {
+            setupFollowButton(post.userId);
+          }
+        }
+      } catch (error) {
+        console.error("Error al cargar publicaciones de seguidos:", error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error al cargar publicaciones</p>
+          </div>
+        `;
       }
     }
 
@@ -2411,29 +2528,12 @@
         // Reproducir/pausar al hacer clic en el video
         if (e.target.tagName === 'VIDEO') {
           const video = e.target;
-          
-          // Pausar cualquier video que se esté reproduciendo
-          if (currentlyPlayingVideo && currentlyPlayingVideo !== video) {
-            currentlyPlayingVideo.pause();
-          }
-          
           if (video.paused) {
-            video.play()
-              .then(() => {
-                currentlyPlayingVideo = video;
-                // Registrar como visto cuando se reproduce
-                const postId = video.closest('.post-card')?.getAttribute('data-post-id');
-                const postType = video.closest('.post-card')?.getAttribute('data-post-type');
-                if (postId && postType) {
-                  addToHistory(postType, postId);
-                }
-              })
-              .catch(err => {
-                console.error("Error al reproducir video:", err);
-              });
+            video.play().catch(err => {
+              console.error("Error al reproducir video:", err);
+            });
           } else {
             video.pause();
-            currentlyPlayingVideo = null;
           }
         }
         
@@ -2448,14 +2548,6 @@
           }
         }
       });
-    }
-
-    // Pausar todos los videos
-    function pauseAllVideos() {
-      document.querySelectorAll('video').forEach(video => {
-        video.pause();
-      });
-      currentlyPlayingVideo = null;
     }
 
     // Alternar pantalla completa
@@ -2610,9 +2702,7 @@
         
         // Crear elemento de publicación
         const postElement = document.createElement('div');
-        postElement.className = 'post-card futuristic-card glow-effect';
-        postElement.setAttribute('data-post-id', post.id);
-        postElement.setAttribute('data-post-type', post.type);
+        postElement.className = 'post-card';
         postElement.innerHTML = `
           <div class="post-header">
             <img src="${userData.photoURL}" alt="Avatar" class="user-avatar" 
@@ -2677,12 +2767,6 @@
           });
           
           video.addEventListener('play', () => {
-            // Pausar cualquier otro video que se esté reproduciendo
-            if (currentlyPlayingVideo && currentlyPlayingVideo !== video) {
-              currentlyPlayingVideo.pause();
-            }
-            currentlyPlayingVideo = video;
-            
             // Registrar como visto cuando se reproduce
             addToHistory(post.type, post.id);
           });
