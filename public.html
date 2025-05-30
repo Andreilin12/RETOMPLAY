@@ -89,6 +89,7 @@
       font-size: 16px;
       color: var(--text-gray);
       z-index: 2;
+      cursor: pointer;
     }
 
     .search-input {
@@ -1370,6 +1371,80 @@
         max-width: 700px;
       }
     }
+
+    /* Nueva sección de búsqueda */
+    .search-section {
+      display: none;
+      padding: 15px;
+    }
+
+    .search-section.active {
+      display: block;
+    }
+
+    .search-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 10px;
+    }
+
+    .back-button {
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .search-section-input {
+      flex: 1;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-light);
+      font-size: 16px;
+    }
+
+    .search-section-input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Botón de descarga */
+    .download-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1001;
+    }
+
+    /* Botón de compartir */
+    .share-btn {
+      position: absolute;
+      bottom: 70px;
+      right: 20px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1001;
+    }
   </style>
 </head>
 <body>
@@ -1381,7 +1456,7 @@
     </div>
     
     <div class="search-container">
-      <i class="fas fa-search search-icon"></i>
+      <i class="fas fa-search search-icon" onclick="showSearchSection()"></i>
       <input type="text" class="search-input" placeholder="Buscar usuarios..." oninput="searchUsers(this.value)">
       <div class="search-results" id="searchResults"></div>
     </div>
@@ -1484,6 +1559,23 @@
           <!-- Lista de seguidos se cargará aquí -->
         </div>
       </div>
+
+      <!-- Nueva sección de búsqueda -->
+      <div class="search-section" id="searchSection">
+        <div class="search-header">
+          <button class="back-button" onclick="hideSearchSection()">
+            <i class="fas fa-arrow-left"></i>
+          </button>
+          <input type="text" class="search-section-input" placeholder="Buscar usuarios..." id="searchSectionInput" oninput="searchUsers(this.value)">
+        </div>
+        
+        <div class="posts-container" id="searchResultsContainer">
+          <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <p>Busca usuarios por nombre o email</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1517,6 +1609,12 @@
     <div class="image-modal-content">
       <img id="expandedImage" src="" alt="Imagen ampliada">
     </div>
+    <div class="download-btn" onclick="downloadImage()">
+      <i class="fas fa-download"></i>
+    </div>
+    <div class="share-btn" onclick="shareMedia('image')">
+      <i class="fas fa-share"></i>
+    </div>
   </div>
 
   <!-- Modal de publicación -->
@@ -1548,6 +1646,9 @@
           </button>
           <button class="action-btn" onclick="togglePostModalComments()">
             <i class="fas fa-comment"></i> Comentar
+          </button>
+          <button class="action-btn" onclick="sharePostModal()">
+            <i class="fas fa-share"></i> Compartir
           </button>
         </div>
         <div class="post-modal-stats">
@@ -1687,6 +1788,7 @@
     let viewedVideos = new Set();
     let selectedFile = null;
     let currentlyPlayingVideo = null;
+    let sharedPosts = {}; // Almacena los posts compartidos
 
     // Inicializar la aplicación
     document.addEventListener('DOMContentLoaded', () => {
@@ -1697,6 +1799,7 @@
           loadLikedPosts();
           loadViewedVideos();
           loadNewNotifications();
+          loadSharedPosts();
           
           // Configurar eventos de video
           setupVideoControls();
@@ -1712,6 +1815,46 @@
         }
       });
     });
+
+    // Mostrar sección de búsqueda
+    function showSearchSection() {
+      document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+      });
+      document.getElementById('profileContainer').style.display = 'none';
+      document.getElementById('searchSection').classList.add('active');
+      document.getElementById('searchSectionInput').focus();
+    }
+
+    // Ocultar sección de búsqueda
+    function hideSearchSection() {
+      document.getElementById('searchSection').classList.remove('active');
+      document.getElementById('homeSection').classList.add('active');
+      document.getElementById('searchSectionInput').value = '';
+      document.getElementById('searchResultsContainer').innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-search"></i>
+          <p>Busca usuarios por nombre o email</p>
+        </div>
+      `;
+    }
+
+    // Cargar posts compartidos
+    async function loadSharedPosts() {
+      try {
+        const sharedSnapshot = await db.collection('sharedPosts')
+          .doc(currentUser.uid)
+          .collection('userSharedPosts')
+          .get();
+        
+        sharedPosts = {};
+        sharedSnapshot.forEach(doc => {
+          sharedPosts[doc.id] = doc.data();
+        });
+      } catch (error) {
+        console.error("Error al cargar posts compartidos:", error);
+      }
+    }
 
     // Configurar formulario de creación de publicación
     function setupCreatePostForm() {
@@ -2062,6 +2205,9 @@
               </button>
               <button class="action-btn" onclick="toggleComments('${post.type}', '${post.id}', this)">
                 <i class="fas fa-comment"></i> Comentar
+              </button>
+              <button class="action-btn" onclick="sharePost('${post.type}', '${post.id}')">
+                <i class="fas fa-share"></i> Compartir
               </button>
             </div>
             <div class="post-stats">
@@ -2458,10 +2604,20 @@
     // Buscar usuarios con coincidencias en tiempo real
     async function searchUsers(query) {
       const searchResults = document.getElementById('searchResults');
+      const searchResultsContainer = document.getElementById('searchResultsContainer');
       
       if (query.length < 2) {
         searchResults.innerHTML = '';
         searchResults.classList.remove('active');
+        
+        if (document.getElementById('searchSection').classList.contains('active')) {
+          searchResultsContainer.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-search"></i>
+              <p>Busca usuarios por nombre o email</p>
+            </div>
+          `;
+        }
         return;
       }
       
@@ -2473,8 +2629,12 @@
           .get();
         
         if (usersSnapshot.empty) {
-          searchResults.innerHTML = '<div class="search-result-item">No se encontraron usuarios</div>';
-          searchResults.classList.add('active');
+          if (document.getElementById('searchSection').classList.contains('active')) {
+            searchResultsContainer.innerHTML = '<div class="empty-state"><i class="fas fa-user-slash"></i><p>No se encontraron usuarios</p></div>';
+          } else {
+            searchResults.innerHTML = '<div class="search-result-item">No se encontraron usuarios</div>';
+            searchResults.classList.add('active');
+          }
           return;
         }
         
@@ -2487,16 +2647,24 @@
           userCache[doc.id] = user;
         });
         
-        displaySearchResults(usersData, searchResults);
+        if (document.getElementById('searchSection').classList.contains('active')) {
+          displaySearchResultsInSection(usersData, searchResultsContainer);
+        } else {
+          displaySearchResults(usersData, searchResults);
+        }
         
       } catch (error) {
         console.error("Error al buscar usuarios:", error);
-        searchResults.innerHTML = '<div class="search-result-item">Error al buscar usuarios</div>';
-        searchResults.classList.add('active');
+        if (document.getElementById('searchSection').classList.contains('active')) {
+          searchResultsContainer.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Error al buscar usuarios</p></div>';
+        } else {
+          searchResults.innerHTML = '<div class="search-result-item">Error al buscar usuarios</div>';
+          searchResults.classList.add('active');
+        }
       }
     }
 
-    // Mostrar resultados de búsqueda
+    // Mostrar resultados de búsqueda en el dropdown
     function displaySearchResults(users, searchResults) {
       searchResults.innerHTML = '';
       
@@ -2521,6 +2689,35 @@
       });
       
       searchResults.classList.add('active');
+    }
+
+    // Mostrar resultados de búsqueda en la sección de búsqueda
+    function displaySearchResultsInSection(users, container) {
+      container.innerHTML = '';
+      
+      users.forEach(user => {
+        if (user.id !== currentUser.uid) {
+          const userElement = document.createElement('div');
+          userElement.className = 'post-card';
+          userElement.innerHTML = `
+            <div class="post-header">
+              <img src="${user.photoURL || 'img/default-profile.jpg'}" alt="Avatar" class="user-avatar">
+              <div class="user-info">
+                <div class="user-name">${user.displayName || 'Usuario'}</div>
+                <div class="post-time">${user.email || ''}</div>
+              </div>
+              <button class="follow-btn" id="searchFollowBtn-${user.id}" onclick="toggleFollow('${user.id}', this)">
+                <i class="fas fa-user-plus"></i> Seguir
+              </button>
+            </div>
+          `;
+          userElement.onclick = () => viewUserProfile(user.id);
+          container.appendChild(userElement);
+          
+          // Configurar botón de seguir
+          setupFollowButton(user.id, `searchFollowBtn-${user.id}`);
+        }
+      });
     }
 
     // Configurar controles de video
@@ -2759,6 +2956,9 @@
               <button class="action-btn" onclick="toggleComments('${post.type}', '${post.id}', this)">
                 <i class="fas fa-comment"></i> Comentar
               </button>
+              <button class="action-btn" onclick="sharePost('${post.type}', '${post.id}')">
+                <i class="fas fa-share"></i> Compartir
+              </button>
             </div>
             <div class="post-stats">
               <span><i class="fas fa-heart"></i> ${post.likes?.length || 0} likes</span>
@@ -2821,6 +3021,54 @@
       const img = document.getElementById('expandedImage');
       img.src = imageUrl;
       modal.style.display = 'flex';
+    }
+
+    // Descargar imagen
+    function downloadImage() {
+      const imageUrl = document.getElementById('expandedImage').src;
+      const link = document.createElement('a');
+      link.href = imageUrl;
+      link.download = `tikitok-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Compartir media
+    function shareMedia(type) {
+      let url = '';
+      let title = '';
+      
+      if (type === 'image') {
+        url = document.getElementById('expandedImage').src;
+        title = 'Mira esta imagen en TikiTok';
+      } else if (currentModalPost) {
+        url = currentModalPost.mediaUrl;
+        title = currentModalPost.title || 'Mira esta publicación en TikiTok';
+      }
+      
+      if (navigator.share) {
+        navigator.share({
+          title: title,
+          url: url
+        }).catch(err => {
+          console.error('Error al compartir:', err);
+          copyToClipboard(url);
+        });
+      } else {
+        copyToClipboard(url);
+      }
+    }
+
+    // Copiar al portapapeles
+    function copyToClipboard(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      showNotification('Enlace copiado al portapapeles', 'success');
     }
 
     // Cerrar modal de imagen
@@ -3164,6 +3412,93 @@
           );
         }
       });
+    }
+
+    // Compartir publicación desde el modal
+    async function sharePostModal() {
+      if (!currentModalPost) return;
+      
+      const post = currentModalPost;
+      await sharePost(post.type, post.id);
+    }
+
+    // Compartir publicación
+    async function sharePost(postType, postId) {
+      try {
+        const collectionName = getCollectionName(postType);
+        const postDoc = await db.collection(collectionName).doc(postId).get();
+        
+        if (!postDoc.exists) {
+          showNotification('La publicación no existe', 'error');
+          return;
+        }
+        
+        const post = postDoc.data();
+        
+        // Mostrar diálogo para seleccionar usuario
+        const userId = prompt('Ingresa el ID del usuario con quien quieres compartir esta publicación:');
+        if (!userId) return;
+        
+        // Verificar que el usuario existe
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (!userDoc.exists) {
+          showNotification('El usuario no existe', 'error');
+          return;
+        }
+        
+        // Guardar el post compartido en ambos usuarios
+        const batch = db.batch();
+        
+        // Para el usuario que comparte
+        const sharedRef = db.collection('sharedPosts')
+          .doc(currentUser.uid)
+          .collection('userSharedPosts')
+          .doc(`${postType}_${postId}`);
+        
+        batch.set(sharedRef, {
+          postType: postType,
+          postId: postId,
+          sharedWith: userId,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Para el usuario que recibe
+        const receivedRef = db.collection('sharedPosts')
+          .doc(userId)
+          .collection('userReceivedPosts')
+          .doc(`${postType}_${postId}`);
+        
+        batch.set(receivedRef, {
+          postType: postType,
+          postId: postId,
+          sharedBy: currentUser.uid,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        await batch.commit();
+        
+        // Enviar notificación
+        await db.collection('notifications')
+          .doc(userId)
+          .collection('userNotifications')
+          .add({
+            type: 'shared_post',
+            postType: postType,
+            postId: postId,
+            userId: currentUser.uid,
+            title: post.title,
+            message: `${currentUser.displayName || 'Un usuario'} ha compartido una publicación contigo`,
+            mediaUrl: post.mediaUrl,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            read: false
+          });
+        
+        showNotification('Publicación compartida exitosamente', 'success');
+        
+      } catch (error) {
+        console.error("Error al compartir publicación:", error);
+        showNotification('Error al compartir publicación', 'error');
+      }
     }
 
     // Filtrar publicaciones
